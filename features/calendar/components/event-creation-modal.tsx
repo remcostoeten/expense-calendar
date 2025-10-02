@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useCalendarStore } from "@/stores/calendar-store"
+import { getColorClass } from "@/lib/colors"
 import { CalendarCreationModal } from "./calendar-creation-modal"
 import type { TCalendarEvent } from "./event-calendar"
 
@@ -326,19 +327,7 @@ export function EventCreationModal({
                       <SelectItem key={calendar.id} value={calendar.id.toString()}>
                         <div className="flex items-center gap-2">
                           <div
-                            className={`w-3 h-3 rounded-full ${
-                              calendar.color === "emerald"
-                                ? "bg-emerald-500"
-                                : calendar.color === "orange"
-                                  ? "bg-orange-500"
-                                  : calendar.color === "violet"
-                                    ? "bg-violet-500"
-                                    : calendar.color === "blue"
-                                      ? "bg-blue-500"
-                                      : calendar.color === "rose"
-                                        ? "bg-rose-500"
-                                        : "bg-gray-500"
-                            }`}
+                            className={`w-3 h-3 rounded-full ${getColorClass(calendar.color)}`}
                           />
                           {calendar.name}
                         </div>

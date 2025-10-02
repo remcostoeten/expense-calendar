@@ -8,23 +8,10 @@ import { useCalendar } from "@/server/api-hooks/use-calendar"
 import { useCalendarSync } from "@/server/api-hooks/use-calendar-sync"
 import { useCalendarData } from "../contexts/calendar-data-context"
 import type { Event, Calendar } from "@/server/schema"
+import { COLOR_MAP } from "@/lib/colors"
 
-const COLOR_MAP: Record<string, string> = {
-  "#10b981": "emerald",
-  "#f97316": "orange",
-  "#8b5cf6": "violet",
-  "#3b82f6": "blue",
-  "#f43f5e": "rose",
-  "#06b6d4": "cyan",
-  "#ec4899": "pink",
-  "#ef4444": "red",
-  "#f59e0b": "amber",
-  "#14b8a6": "teal",
-  "#6366f1": "indigo",
-  "#d946ef": "purple",
-}
 
-interface BigCalendarProps {
+type TProps = {
   userId: string
 }
 
@@ -46,13 +33,12 @@ function mapEventToCalendarEvent(event: Event, calendars: Calendar[]): TCalendar
   }
 }
 
-export default function BigCalendar({ userId }: BigCalendarProps) {
+export default function BigCalendar({ userId }: TProps) {
   const calendarHook = useCalendar()
   const { events, calendars } = useCalendarData()
   const userIdNum = parseInt(userId, 10)
   const initializationRef = useRef(false)
   
-  // Validate user ID
   if (!userId || isNaN(userIdNum) || userIdNum <= 0) {
     console.error("Invalid user ID:", { userId, userIdNum })
     return (
@@ -65,7 +51,6 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
     )
   }
   
-  // We need mutate functions for updating data after operations
   const { mutate: mutateCalendars } = useCalendarSync(userIdNum)
   const { mutate: mutateEvents } = useSWR(`events-${userId}`, null)
 

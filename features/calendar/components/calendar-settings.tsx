@@ -27,19 +27,10 @@ import {
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCalendarStore } from "@/stores/calendar-store"
+import { COLOR_OPTIONS } from "@/lib/colors"
 import { useUserSettings } from "@/server/api-hooks/use-user-settings"
 import { useAuth } from "@/lib/auth/auth-context"
 
-const colorOptions = [
-  { value: "blue", label: "Blue", class: "bg-blue-500" },
-  { value: "emerald", label: "Emerald", class: "bg-emerald-500" },
-  { value: "orange", label: "Orange", class: "bg-orange-500" },
-  { value: "violet", label: "Violet", class: "bg-violet-500" },
-  { value: "rose", label: "Rose", class: "bg-rose-500" },
-  { value: "cyan", label: "Cyan", class: "bg-cyan-500" },
-  { value: "pink", label: "Pink", class: "bg-pink-500" },
-  { value: "yellow", label: "Yellow", class: "bg-yellow-500" },
-]
 
 export function CalendarSettings() {
   const { calendars, updateCalendar, deleteCalendar, addCalendar, showCurrentTime, setShowCurrentTime } =
@@ -162,7 +153,7 @@ export function CalendarSettings() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {colorOptions.map((color) => (
+                        {COLOR_OPTIONS.map((color) => (
                           <SelectItem key={color.value} value={color.value}>
                             <div className="flex items-center gap-2">
                               <div className={`w-4 h-4 rounded-full ${color.class}`} />

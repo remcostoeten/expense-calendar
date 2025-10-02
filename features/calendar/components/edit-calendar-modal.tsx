@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Calendar } from "@/stores/calendar-store"
+import { COLOR_OPTIONS } from "@/lib/colors"
 
 type TProps = {
   calendar: Calendar
@@ -15,20 +16,6 @@ type TProps = {
   onSave: (calendar: Calendar) => void
 }
 
-const COLOR_OPTIONS = [
-  { value: "emerald", label: "Emerald", hex: "#10b981" },
-  { value: "blue", label: "Blue", hex: "#3b82f6" },
-  { value: "orange", label: "Orange", hex: "#f97316" },
-  { value: "violet", label: "Violet", hex: "#8b5cf6" },
-  { value: "rose", label: "Rose", hex: "#f43f5e" },
-  { value: "cyan", label: "Cyan", hex: "#06b6d4" },
-  { value: "pink", label: "Pink", hex: "#ec4899" },
-  { value: "red", label: "Red", hex: "#ef4444" },
-  { value: "amber", label: "Amber", hex: "#f59e0b" },
-  { value: "teal", label: "Teal", hex: "#14b8a6" },
-  { value: "indigo", label: "Indigo", hex: "#6366f1" },
-  { value: "purple", label: "Purple", hex: "#d946ef" },
-]
 
 export function EditCalendarModal({ calendar, isOpen, onClose, onSave }: TProps) {
   const [name, setName] = useState(calendar.name)

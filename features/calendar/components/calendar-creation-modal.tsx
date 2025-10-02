@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useCalendarStore } from "@/stores/calendar-store"
 import { useCreateCalendar } from "@/server/api-hooks/use-calendar"
+import { COLOR_OPTIONS } from "@/lib/colors"
 
 type TProps = {
   isOpen: boolean
@@ -19,16 +20,6 @@ type TProps = {
   onCalendarCreated?: () => void
 }
 
-const COLORS= [
-  { value: "blue", label: "Blue", class: "bg-blue-500", hex: "#3b82f6" },
-  { value: "emerald", label: "Emerald", class: "bg-emerald-500", hex: "#10b981" },
-  { value: "orange", label: "Orange", class: "bg-orange-500", hex: "#f97316" },
-  { value: "violet", label: "Violet", class: "bg-violet-500", hex: "#8b5cf6" },
-  { value: "rose", label: "Rose", class: "bg-rose-500", hex: "#f43f5e" },
-  { value: "cyan", label: "Cyan", class: "bg-cyan-500", hex: "#06b6d4" },
-  { value: "pink", label: "Pink", class: "bg-pink-500", hex: "#ec4899" },
-  { value: "yellow", label: "Yellow", class: "bg-yellow-500", hex: "#eab308" },
-]
 
 export function CalendarCreationModal({
   isOpen,
@@ -43,7 +34,7 @@ export function CalendarCreationModal({
   const createCalendar = useCreateCalendar({
     onSuccess: (calendar) => {
       onCalendarCreated?.()
-      const colorName = colorOptions.find(opt => opt.hex === calendar.color)?.value || "blue"
+        const colorName = COLOR_OPTIONS.find(opt => opt.hex === calendar.color)?.value || "blue"
       onSuccess?.(colorName)
     },
     onError: (error) => {
@@ -52,13 +43,13 @@ export function CalendarCreationModal({
   })
 
   const usedColors = calendars.map((cal) => cal.color)
-  const availableColors = colorOptions.filter((option) => !usedColors.includes(option.value))
+  const availableColors = COLOR_OPTIONS.filter((option) => !usedColors.includes(option.value))
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (name.trim()) {
       if (userId) {
-        const selectedColor = colorOptions.find((opt) => opt.value === color)
+        const selectedColor = COLOR_OPTIONS.find((opt) => opt.value === color)
         await createCalendar.execute({
           userId,
           name: name.trim(),
@@ -109,7 +100,7 @@ export function CalendarCreationModal({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(availableColors.length > 0 ? availableColors : colorOptions).map((option) => (
+                  {(availableColors.length > 0 ? availableColors : COLOR_OPTIONS).map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     <div className="flex items-center gap-2">
                       <div className={`w-4 h-4 rounded-full ${option.class}`} />

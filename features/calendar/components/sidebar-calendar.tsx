@@ -10,21 +10,9 @@ import { getDefaultClassNames } from "react-day-picker"
 import type { Event, Calendar as DbCalendar } from "@/server/schema"
 import { startOfDay, endOfDay, isWithinInterval } from "date-fns"
 import { useCalendarData } from "../contexts/calendar-data-context"
+import { COLOR_MAP } from "@/lib/colors"
 
-const COLOR_MAP: Record<string, string> = {
-  "#10b981": "emerald",
-  "#f97316": "orange", 
-  "#8b5cf6": "violet",
-  "#3b82f6": "blue",
-  "#f43f5e": "rose",
-  "#06b6d4": "cyan",
-  "#ec4899": "pink",
-  "#ef4444": "red",
-  "#f59e0b": "amber",
-  "#14b8a6": "teal",
-  "#6366f1": "indigo",
-  "#d946ef": "purple",
-}
+
 
 interface SidebarCalendarProps {
   events?: Event[]

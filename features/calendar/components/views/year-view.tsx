@@ -2,6 +2,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInte
 import { cn } from "@/lib/utils"
 import type { TCalendarEvent } from "../event-calendar"
 import { getEventsForDay } from "../../utils/calendar-utils"
+import { getColorClass } from "@/lib/colors"
 
 type TProps = {
     currentDate: Date
@@ -82,12 +83,7 @@ export function YearView({
                                                                         key={event.id}
                                                                         className={cn(
                                                                             "w-1 h-1 rounded-full",
-                                                                            event.color === "blue" && "bg-blue-500",
-                                                                            event.color === "emerald" && "bg-emerald-500",
-                                                                            event.color === "orange" && "bg-orange-500",
-                                                                            event.color === "violet" && "bg-violet-500",
-                                                                            event.color === "rose" && "bg-rose-500",
-                                                                            !["blue", "emerald", "orange", "violet", "rose"].includes(event.color) && "bg-gray-500"
+                                                                            getColorClass(event.color)
                                                                         )}
                                                                     />
                                                                 ))}
