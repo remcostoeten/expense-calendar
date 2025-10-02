@@ -206,11 +206,11 @@ export async function getOAuthUrl(provider: string, state?: string, userId?: num
 export async function getRedirectUri(provider: string): string {
   switch (provider) {
     case 'google':
-      return `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/google/callback`
+      return process.env.GOOGLE_REDIRECT_URI || `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/google/callback`
     case 'outlook':
-      return `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/outlook/callback`
+      return process.env.OUTLOOK_REDIRECT_URI || `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/outlook/callback`
     case 'apple':
-      return `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/apple/callback`
+      return process.env.APPLE_REDIRECT_URI || `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/apple/callback`
     default:
       throw new Error(`Unsupported provider: ${provider}`)
   }

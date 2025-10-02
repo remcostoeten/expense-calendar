@@ -73,7 +73,7 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
   const hasData = calendars.length > 0 || events.length > 0
 
   useEffect(() => {
-    const initializeCalendars = async () => {
+    async function initializeCalendars() {
       // Only initialize once and only if we have calendar data and no calendars exist
       if (initializationRef.current || calendars.length > 0) {
         return
@@ -101,7 +101,7 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
     return events.map((event) => mapEventToCalendarEvent(event, calendars))
   }, [events, calendars])
 
-  const handleEventAdd = async (event: TCalendarEvent) => {
+  async function handleEventAdd(event: TCalendarEvent) {
     const calendar = calendars.find((cal) => COLOR_MAP[cal.color || ""] === event.color)
     if (!calendar) {
       console.error("No calendar found for color:", event.color)
@@ -126,7 +126,7 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
     }
   }
 
-  const handleEventUpdate = async (updatedEvent: TCalendarEvent) => {
+  async function handleEventUpdate(updatedEvent: TCalendarEvent) {
     await calendarHook.updateEvent.execute({
       eventId: updatedEvent.id,
       data: {
@@ -142,12 +142,12 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
     mutateEvents()
   }
 
-  const handleEventDelete = async (eventId: string) => {
+  async function handleEventDelete(eventId: string) {
     await calendarHook.deleteEvent.execute({ eventId })
     mutateEvents()
   }
 
-  const handleCalendarCreated = async () => {
+  async function handleCalendarCreated() {
     await mutateCalendars()
   }
 

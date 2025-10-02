@@ -1,6 +1,5 @@
 import { format } from "date-fns"
 import { RiRepeatLine } from "@remixicon/react"
-import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { getColorClasses } from "../utils/calendar-utils"
 import type { TCalendarEvent } from "./event-calendar"
@@ -27,10 +26,10 @@ export function EventCard({
   const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60 * 60)
 
   return (
-    <Card
+    <div
       data-event-id={event.id}
       className={cn(
-        "absolute left-0 right-0 text-xs border transition-all duration-200 hover:shadow-md cursor-move pointer-events-auto group",
+        "absolute left-0 right-0 text-xs border rounded-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] hover:z-10 cursor-move pointer-events-auto group p-2 h-full flex flex-col overflow-hidden",
         getColorClasses(event.color),
         isBeingDragged && "shadow-lg scale-105 z-50"
       )}
@@ -48,7 +47,7 @@ export function EventCard({
         onMouseDown={(e) => onMouseDown(event, e, 'bottom')}
       />
 
-      <CardContent className="p-2 h-full flex flex-col relative overflow-hidden">
+      <div className="flex flex-col relative overflow-hidden flex-1">
         <div className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="font-medium truncate flex-1">{event.title}</div>
@@ -91,7 +90,7 @@ export function EventCard({
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

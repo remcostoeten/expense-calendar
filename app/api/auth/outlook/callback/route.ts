@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         client_secret: process.env.OUTLOOK_CLIENT_SECRET || "",
         code: code,
         grant_type: "authorization_code",
-        redirect_uri: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/outlook/callback`,
+        redirect_uri: process.env.OUTLOOK_REDIRECT_URI || `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/outlook/callback`,
       }),
     })
 

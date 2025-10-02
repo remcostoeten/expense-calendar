@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useCalendarStore } from "@/stores/calendar-store"
 import { useCreateCalendar } from "@/server/api-hooks/use-calendar"
 
-interface CalendarCreationModalProps {
+type TProps = {
   isOpen: boolean
   onClose: () => void
   onSuccess?: (calendarColor: string) => void
@@ -19,7 +19,7 @@ interface CalendarCreationModalProps {
   onCalendarCreated?: () => void
 }
 
-const colorOptions = [
+const COLORS= [
   { value: "blue", label: "Blue", class: "bg-blue-500", hex: "#3b82f6" },
   { value: "emerald", label: "Emerald", class: "bg-emerald-500", hex: "#10b981" },
   { value: "orange", label: "Orange", class: "bg-orange-500", hex: "#f97316" },
@@ -36,14 +36,13 @@ export function CalendarCreationModal({
   onSuccess,
   userId,
   onCalendarCreated,
-}: CalendarCreationModalProps) {
+}: TProps) {
   const { addCalendar, calendars } = useCalendarStore()
   const [name, setName] = useState("")
   const [color, setColor] = useState("blue")
   const createCalendar = useCreateCalendar({
     onSuccess: (calendar) => {
       onCalendarCreated?.()
-      // Pass the created calendar's color name for selection
       const colorName = colorOptions.find(opt => opt.hex === calendar.color)?.value || "blue"
       onSuccess?.(colorName)
     },
@@ -55,7 +54,7 @@ export function CalendarCreationModal({
   const usedColors = calendars.map((cal) => cal.color)
   const availableColors = colorOptions.filter((option) => !usedColors.includes(option.value))
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (name.trim()) {
       if (userId) {
@@ -66,7 +65,6 @@ export function CalendarCreationModal({
           color: selectedColor?.hex || "#3b82f6",
           isDefault: false,
         })
-        // onSuccess will be called by the hook's onSuccess callback
         setName("")
         setColor("blue")
         onClose()

@@ -43,10 +43,12 @@ export const calendars = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     isDefault: boolean("is_default").default(false),
+    sortOrder: integer("sort_order").default(0),
     ...timestamps,
   },
   (table) => ({
     userIdx: index("calendars_user_idx").on(table.userId),
+    sortIdx: index("calendars_sort_idx").on(table.sortOrder),
   })
 );
 

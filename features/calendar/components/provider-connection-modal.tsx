@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { useProviderConnections } from "../hooks/use-provider-connections"
 import { ExternalProvider } from "@/stores/calendar-store"
 
-interface ProviderConnectionModalProps {
+type TProps = {
   userId: number
   trigger?: React.ReactNode
   externalProviders: ExternalProvider[]
@@ -24,18 +24,16 @@ export function ProviderConnectionModal({ userId, trigger, externalProviders }: 
   const [isOpen, setIsOpen] = useState(false)
   const { connectProvider, disconnectProvider, getAuthorizationUrl, error } = useProviderConnections(userId)
 
-  const handleConnect = async (provider: string) => {
+  async function handleConnect(provider: string) {
     try {
       const authUrl = await getAuthorizationUrl(provider, undefined, userId)
-      // In a real app, you'd redirect to this URL or open it in a popup
-      // For now, we'll just show it
-      window.open(authUrl, '_blank')
+      window.location.href = authUrl
     } catch (err) {
       console.error('Failed to get authorization URL:', err)
     }
   }
 
-  const handleDisconnect = async (provider: string) => {
+  async function handleDisconnect(provider: string) {
     await disconnectProvider(provider)
   }
 

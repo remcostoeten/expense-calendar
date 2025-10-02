@@ -16,11 +16,13 @@ import { CalendarSettings } from "@/features/calendar/components/calendar-settin
 import { CalendarCreationModal } from "@/features/calendar/components/calendar-creation-modal"
 import SidebarCalendar from "@/features/calendar/components/sidebar-calendar"
 import { ProviderConnectionModal } from "@/features/calendar/components/provider-connection-modal"
+import { CalendarContextMenu } from "@/features/calendar/components/calendar-context-menu"
 import { useRightSidebarStore } from "@/stores/right-sidebar-store"
 import { type CalendarEvent, useCalendarStore } from "@/stores/calendar-store"
 import { useCalendarData } from "@/features/calendar/contexts/calendar-data-context"
 import { useCalendarSync } from "@/server/api-hooks/use-calendar-sync"
 import { useProviderConnections } from "@/features/calendar/hooks/use-provider-connections"
+import { useCalendarManagement } from "@/server/api-hooks/use-calendar-management"
 import { format, isToday, isTomorrow } from "date-fns"
 
 import {
@@ -41,7 +43,11 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
-function MobileSidebarContent() {
+function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers: {
+  onReorder: (calendarId: string, direction: 'up' | 'down') => void
+  onEdit: (calendar: any) => void
+  onDelete: (calendarId: string) => void
+}}) {
   const {
     calendars,
     externalProviders,
@@ -50,7 +56,7 @@ function MobileSidebarContent() {
     getUpcomingEvents,
     getPreviousEvents,
     showRecurringEvents,
-    toggleRecurringEvents,
+    setShowRecurringEvents,
   } = useCalendarStore()
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
   const [showPreviousEvents, setShowPreviousEvents] = useState(false)
@@ -107,7 +113,7 @@ function MobileSidebarContent() {
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                onClick={toggleRecurringEvents}
+                onClick={() => setShowRecurringEvents(!showRecurringEvents)}
                 title={showRecurringEvents ? "Hide recurring events" : "Show recurring events"}
               >
                 {showRecurringEvents ? <RiEyeLine className="h-4 w-4" /> : <RiEyeOffLine className="h-4 w-4" />}
@@ -172,42 +178,49 @@ function MobileSidebarContent() {
 
           <div className="space-y-2">
             {calendars.map((calendar) => (
-              <button
+              <CalendarContextMenu
                 key={calendar.id}
-                type="button"
-                onClick={() => toggleColorVisibility(calendar.color)}
-                className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors"
+                calendar={calendar}
+                onReorder={contextMenuHandlers.onReorder}
+                onEdit={contextMenuHandlers.onEdit}
+                onDelete={contextMenuHandlers.onDelete}
               >
-                <span className="flex items-center gap-3">
-                  <span className={`grid place-content-center size-4 shrink-0 rounded-[4px] border border-input ${calendar.isVisible ? 'bg-primary border-primary text-primary-foreground' : ''}`}>
-                    <RiCheckLine
-                      className={`${calendar.isVisible ? "visible" : "invisible"}`}
-                      size={12}
-                      aria-hidden="true"
-                    />
+                <button
+                  type="button"
+                  onClick={() => toggleColorVisibility(calendar.color)}
+                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className={`grid place-content-center size-4 shrink-0 rounded-[4px] border border-input ${calendar.isVisible ? 'bg-primary border-primary text-primary-foreground' : ''}`}>
+                      <RiCheckLine
+                        className={`${calendar.isVisible ? "visible" : "invisible"}`}
+                        size={12}
+                        aria-hidden="true"
+                      />
+                    </span>
+                    <span
+                      className={`${!calendar.isVisible ? "line-through text-muted-foreground/65" : ""} text-sm font-medium`}
+                    >
+                      {calendar.name}
+                    </span>
                   </span>
                   <span
-                    className={`${!calendar.isVisible ? "line-through text-muted-foreground/65" : ""} text-sm font-medium`}
-                  >
-                    {calendar.name}
-                  </span>
-                </span>
-                <span
-                  className={`size-3 rounded-full border-2 border-white shadow-sm ${
-                    calendar.color === "emerald"
-                      ? "bg-emerald-500"
-                      : calendar.color === "orange"
-                        ? "bg-orange-500"
-                        : calendar.color === "violet"
-                          ? "bg-violet-500"
-                          : calendar.color === "blue"
-                            ? "bg-blue-500"
-                            : calendar.color === "rose"
-                              ? "bg-rose-500"
-                              : "bg-gray-500"
-                  }`}
-                />
-              </button>
+                    className={`size-3 rounded-full border-2 border-white shadow-sm ${
+                      calendar.color === "emerald"
+                        ? "bg-emerald-500"
+                        : calendar.color === "orange"
+                          ? "bg-orange-500"
+                          : calendar.color === "violet"
+                            ? "bg-violet-500"
+                            : calendar.color === "blue"
+                              ? "bg-blue-500"
+                              : calendar.color === "rose"
+                                ? "bg-rose-500"
+                                : "bg-gray-500"
+                    }`}
+                  />
+                </button>
+              </CalendarContextMenu>
             ))}
           </div>
 
@@ -303,7 +316,17 @@ function MobileSidebarContent() {
   )
 }
 
-export function RightSidebarTrigger({ className, ...props }: React.ComponentProps<typeof Button>) {
+export function RightSidebarTrigger({
+  className,
+  contextMenuHandlers,
+  ...props
+}: React.ComponentProps<typeof Button> & {
+  contextMenuHandlers: {
+    onReorder: (calendarId: string, direction: 'up' | 'down') => void
+    onEdit: (calendar: any) => void
+    onDelete: (calendarId: string) => void
+  }
+}) {
   const { toggleSidebar, state } = useRightSidebarStore()
 
   return (
@@ -321,7 +344,7 @@ export function RightSidebarTrigger({ className, ...props }: React.ComponentProp
           </Button>
         </SheetTrigger>
         <SheetContent side="right" className="w-80 p-0">
-          <MobileSidebarContent />
+          <MobileSidebarContent contextMenuHandlers={contextMenuHandlers} />
         </SheetContent>
       </Sheet>
     </>
@@ -340,7 +363,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     getUpcomingEvents,
     getPreviousEvents,
     showRecurringEvents,
-    toggleRecurringEvents,
+    setShowRecurringEvents,
   } = useCalendarStore()
 
   // Get userId from calendar data context
@@ -352,6 +375,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Get provider connections
   const { connections, isLoading: isLoadingConnections } = useProviderConnections(userId || 0)
 
+  // Get calendar management hooks
+  const calendarManagement = useCalendarManagement()
+
   const upcomingEvents = getUpcomingEvents(5)
   const previousEvents = getPreviousEvents(10)
 const formatEventTime = (event: CalendarEvent) => {
@@ -359,6 +385,49 @@ const formatEventTime = (event: CalendarEvent) => {
     if (isToday(event.start)) return format(event.start, "h:mm a")
     if (isTomorrow(event.start)) return `Tomorrow, ${format(event.start, "h:mm a")}`
     return format(event.start, "MMM d, h:mm a")
+  }
+
+  // Context menu handlers (shared between desktop and mobile)
+  const handleReorderCalendar = (calendarId: string, direction: 'up' | 'down') => {
+    const currentIndex = calendars.findIndex(cal => cal.id === calendarId)
+    if (currentIndex === -1) return
+
+    let newIndex
+    if (direction === 'up' && currentIndex > 0) {
+      newIndex = currentIndex - 1
+    } else if (direction === 'down' && currentIndex < calendars.length - 1) {
+      newIndex = currentIndex + 1
+    } else {
+      return
+    }
+
+    // Create new order array
+    const reorderedCalendars = [...calendars]
+    const [movedCalendar] = reorderedCalendars.splice(currentIndex, 1)
+    reorderedCalendars.splice(newIndex, 0, movedCalendar)
+
+    // Update sort orders
+    const calendarOrders = reorderedCalendars.map((cal, index) => ({
+      id: parseInt(cal.id),
+      sortOrder: index,
+    }))
+
+    calendarManagement.reorderCalendars.execute({ calendarOrders })
+  }
+
+  const handleEditCalendar = (calendar: any) => {
+    calendarManagement.updateCalendar.execute({
+      calendarId: parseInt(calendar.id),
+      updates: {
+        name: calendar.name,
+        color: calendar.color,
+        description: calendar.description,
+      },
+    })
+  }
+
+  const handleDeleteCalendar = (calendarId: string) => {
+    calendarManagement.deleteCalendar.execute({ calendarId: parseInt(calendarId) })
   }
 
   return (
@@ -370,7 +439,14 @@ const formatEventTime = (event: CalendarEvent) => {
           <SidebarHeader className="border-b border-border/30 flex-shrink-0 p-4">
             <div className="flex justify-between items-center">
               <CalendarSettings />
-              <RightSidebarTrigger className="text-muted-foreground hover:text-foreground" />
+              <RightSidebarTrigger
+                className="text-muted-foreground hover:text-foreground"
+                contextMenuHandlers={{
+                  onReorder: handleReorderCalendar,
+                  onEdit: handleEditCalendar,
+                  onDelete: handleDeleteCalendar,
+                }}
+              />
             </div>
           </SidebarHeader>
           <SidebarContent className="gap-0 flex-1 overflow-y-auto overflow-x-hidden">
@@ -397,7 +473,7 @@ const formatEventTime = (event: CalendarEvent) => {
                     variant="ghost"
                     size="sm"
                     className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
-                    onClick={toggleRecurringEvents}
+                    onClick={() => setShowRecurringEvents(!showRecurringEvents)}
                     title={showRecurringEvents ? "Hide recurring events" : "Show recurring events"}
                   >
                     {showRecurringEvents ? <RiEyeLine className="h-4 w-4" /> : <RiEyeOffLine className="h-4 w-4" />}
@@ -470,42 +546,49 @@ const formatEventTime = (event: CalendarEvent) => {
                 <SidebarMenu className="space-y-2">
                   {calendars.map((calendar) => (
                     <SidebarMenuItem key={calendar.id}>
-                      <SidebarMenuButton
-                        onClick={() => toggleColorVisibility(calendar.color)}
-                        className="relative rounded-lg [&>svg]:size-auto justify-between has-focus-visible:border-ring has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px] py-3 px-3 hover:bg-accent/40 transition-all duration-200 border border-transparent hover:border-border/30 group"
+                      <CalendarContextMenu
+                        calendar={calendar}
+                        onReorder={handleReorderCalendar}
+                        onEdit={handleEditCalendar}
+                        onDelete={handleDeleteCalendar}
                       >
-                        <span className="font-medium flex items-center gap-3 flex-1 min-w-0">
-                          <span className={`grid place-content-center size-4 shrink-0 rounded border transition-all duration-200 ${calendar.isVisible ? 'bg-primary border-primary text-primary-foreground shadow-sm' : 'border-input group-hover:border-border'}`}>
-                            <RiCheckLine
-                              className={`transition-opacity duration-200 ${calendar.isVisible ? "opacity-100" : "opacity-0"}`}
-                              size={12}
-                              aria-hidden="true"
+                        <SidebarMenuButton
+                          onClick={() => toggleColorVisibility(calendar.color)}
+                          className="relative rounded-lg [&>svg]:size-auto justify-between has-focus-visible:border-ring has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px] py-3 px-3 hover:bg-accent/40 transition-all duration-200 border border-transparent hover:border-border/30 group"
+                        >
+                          <span className="font-medium flex items-center gap-3 flex-1 min-w-0">
+                            <span className={`grid place-content-center size-4 shrink-0 rounded border transition-all duration-200 ${calendar.isVisible ? 'bg-primary border-primary text-primary-foreground shadow-sm' : 'border-input group-hover:border-border'}`}>
+                              <RiCheckLine
+                                className={`transition-opacity duration-200 ${calendar.isVisible ? "opacity-100" : "opacity-0"}`}
+                                size={12}
+                                aria-hidden="true"
+                              />
+                            </span>
+                            <span
+                              className={`truncate transition-all duration-200 ${!calendar.isVisible ? "line-through text-muted-foreground/60" : "text-foreground"}`}
+                            >
+                              {calendar.name}
+                            </span>
+                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span
+                              className={`size-3 rounded-full border border-background/50 shadow-sm transition-transform duration-200 group-hover:scale-110 ${
+                                calendar.color === "emerald"
+                                  ? "bg-emerald-500"
+                                  : calendar.color === "orange"
+                                    ? "bg-orange-500"
+                                    : calendar.color === "violet"
+                                      ? "bg-violet-500"
+                                      : calendar.color === "blue"
+                                        ? "bg-blue-500"
+                                        : calendar.color === "rose"
+                                          ? "bg-rose-500"
+                                          : "bg-gray-500"
+                              }`}
                             />
-                          </span>
-                          <span
-                            className={`truncate transition-all duration-200 ${!calendar.isVisible ? "line-through text-muted-foreground/60" : "text-foreground"}`}
-                          >
-                            {calendar.name}
-                          </span>
-                        </span>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span
-                            className={`size-3 rounded-full border border-background/50 shadow-sm transition-transform duration-200 group-hover:scale-110 ${
-                              calendar.color === "emerald"
-                                ? "bg-emerald-500"
-                                : calendar.color === "orange"
-                                  ? "bg-orange-500"
-                                  : calendar.color === "violet"
-                                    ? "bg-violet-500"
-                                    : calendar.color === "blue"
-                                      ? "bg-blue-500"
-                                      : calendar.color === "rose"
-                                        ? "bg-rose-500"
-                                        : "bg-gray-500"
-                            }`}
-                          />
-                        </div>
-                      </SidebarMenuButton>
+                          </div>
+                        </SidebarMenuButton>
+                      </CalendarContextMenu>
                     </SidebarMenuItem>
                   ))}
 

@@ -85,7 +85,7 @@ export function MonthView({
                                                 key={event.id}
                                                 data-event-id={event.id}
                                                 className={cn(
-                                                    "text-xs p-1 rounded border cursor-pointer hover:shadow-sm transition-all",
+                                                    "text-xs p-1 rounded-md border cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all",
                                                     getColorClasses(event.color)
                                                 )}
                                                 onClick={(e) => {

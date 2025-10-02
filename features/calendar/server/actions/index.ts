@@ -7,3 +7,4 @@ export { getAllUserEventsAction, getAllUserEventsByDateRangeAction } from "./get
 export { createCalendarAction } from "./create-calendar-action"
 export { createDefaultCalendarsAction } from "./create-default-calendars-action"
 export { getDefaultCalendarTemplatesAction } from "./get-default-calendar-templates-action"
+export { updateCalendarAction, deleteCalendarAction, reorderCalendarsAction, getCalendarsForUserAction } from "./calendar-management-actions"

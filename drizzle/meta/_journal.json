@@ -50,6 +50,13 @@
       "when": 1759427568387,
       "tag": "0006_fearless_captain_cross",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1759432376316,
+      "tag": "0007_nervous_felicia_hardy",
+      "breakpoints": true
     }
   ]
 }

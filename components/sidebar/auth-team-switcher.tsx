@@ -18,7 +18,8 @@ export function AuthTeamSwitcher() {
   const { user, signOut, isLoading } = useAuth()
   const router = useRouter()
 
-  const handleSignOut = async () => {
+
+  async function handleSignOut() {
     try {
       await signOut()
       router.push("/auth/signin")
