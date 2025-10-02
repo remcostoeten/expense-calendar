@@ -18,7 +18,7 @@ export default function SignInForm() {
   }, [user, router])
 
   const handleRedirectToSignIn = () => {
-    router.push("/handler/sign-in")
+    router.push("/auth/signin")
   }
 
   if (user) {

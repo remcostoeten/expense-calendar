@@ -12,7 +12,7 @@ export default function HomePage() {
     if (user) {
       router.push("/dashboard/calendar")
     } else {
-      router.push("/handler/sign-in")
+      router.push("/auth/signin")
     }
   }, [router, user])
 

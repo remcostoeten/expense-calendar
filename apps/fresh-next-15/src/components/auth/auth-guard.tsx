@@ -13,7 +13,7 @@ interface AuthGuardProps {
 }
 
 // Component-based auth guard (alternative to HoC)
-export function AuthGuard({ children, fallback, redirectTo = "/handler/sign-in", requireAuth = true }: AuthGuardProps) {
+export function AuthGuard({ children, fallback, redirectTo = "/auth/signin", requireAuth = true }: AuthGuardProps) {
   const user = useUser()
   const router = useRouter()
 

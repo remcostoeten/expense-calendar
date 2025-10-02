@@ -16,7 +16,7 @@ export function withAuth<P extends object>(
   WrappedComponent: React.ComponentType<P & { user: any }>,
   options: WithAuthOptions = {},
 ) {
-  const { redirectTo = "/handler/sign-in", requireAuth = true, loadingComponent: LoadingComponent } = options
+  const { redirectTo = "/auth/signin", requireAuth = true, loadingComponent: LoadingComponent } = options
 
   const AuthenticatedComponent = (props: P) => {
     const user = useUser()
@@ -62,7 +62,7 @@ export function withAuth<P extends object>(
 }
 
 // Convenience hook for protected pages
-export function useRequireAuth(redirectTo = "/handler/sign-in") {
+export function useRequireAuth(redirectTo = "/auth/signin") {
   const user = useUser()
   const router = useRouter()
 
