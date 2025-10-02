@@ -51,7 +51,7 @@ export interface TCalendarEvent {
   }
 }
 
-interface EventCalendarProps {
+type TProps = {
   events: TCalendarEvent[]
   onEventAdd?: (event: TCalendarEvent) => void
   onEventUpdate?: (event: TCalendarEvent) => void
@@ -62,7 +62,6 @@ interface EventCalendarProps {
 }
 
 type CalendarView = "day" | "week" | "month" | "year"
-type ZoomLevel = "15min" | "30min" | "1hour" | "2hour"
 
 export function EventCalendar({
   events,
@@ -72,12 +71,9 @@ export function EventCalendar({
   initialView = "week",
   userId,
   onCalendarCreated,
-}: EventCalendarProps) {
+}: TProps) {
   const { currentDate, setCurrentDate, showCurrentTime } = useCalendarStore()
   const [view, setView] = useState<CalendarView>(initialView)
-  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>("1hour")
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStartY, setDragStartY] = useState(0)
   const [isCreatingEvent, setIsCreatingEvent] = useState(false)
   const [eventCreationStart, setEventCreationStart] = useState<Date>(new Date())
   const [eventCreationEnd, setEventCreationEnd] = useState<Date>(new Date())
@@ -85,31 +81,12 @@ export function EventCalendar({
   const [selectionStart, setSelectionStart] = useState<{ date: Date; time: number } | null>(null)
   const [selectionEnd, setSelectionEnd] = useState<{ date: Date; time: number } | null>(null)
   const [selectionDay, setSelectionDay] = useState<Date | null>(null)
-  const timelineRef = useRef<HTMLDivElement>(null)
   const calendarContentRef = useRef<HTMLDivElement>(null)
 
   const [isEditingEvent, setIsEditingEvent] = useState(false)
   const [editingEvent, setEditingEvent] = useState<TCalendarEvent | null>(null)
-  const [isDraggingEvent, setIsDraggingEvent] = useState(false)
-  const [draggedEvent, setDraggedEvent] = useState<TCalendarEvent | null>(null)
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
-  const [isResizingEvent, setIsResizingEvent] = useState(false)
-  const [resizingEvent, setResizingEvent] = useState<TCalendarEvent | null>(null)
-  const [resizeHandle, setResizeHandle] = useState<"top" | "bottom" | null>(null)
-  const [resizePreview, setResizePreview] = useState<{ start: Date; end: Date } | null>(null)
-  const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null)
   const [currentTime, setCurrentTime] = useState(new Date())
 
-  const zoomConfig = {
-    "15min": { pixelsPerHour: 256, minuteInterval: 15, showMinutes: true },
-    "30min": { pixelsPerHour: 128, minuteInterval: 30, showMinutes: true },
-    "1hour": { pixelsPerHour: 64, minuteInterval: 60, showMinutes: false },
-    "2hour": { pixelsPerHour: 32, minuteInterval: 120, showMinutes: false },
-  }
-
-  const currentZoom = zoomConfig[zoomLevel]
-
-  // Update current time every minute when showCurrentTime is enabled
   useEffect(() => {
     if (!showCurrentTime) return
 
@@ -128,15 +105,16 @@ export function EventCalendar({
 
   const jumpToCurrentTime = useCallback(() => {
     if (!calendarContentRef.current) return
-    
+
     const now = new Date()
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
     const currentTimeInHours = currentHour + currentMinute / 60
-    
-    // Calculate the scroll position (64px per hour in week view)
-    const scrollPosition = currentTimeInHours * 64
-    
+
+    // Calculate the scroll position (responsive height per hour)
+    const hourHeight = window.innerWidth >= 640 ? 64 : 48
+    const scrollPosition = currentTimeInHours * hourHeight
+
     // Scroll to current time with smooth animation
     calendarContentRef.current.scrollTo({
       top: scrollPosition - 100, // Offset to show some context above current time
@@ -144,12 +122,7 @@ export function EventCalendar({
     })
   }, [])
 
-  const getTimeFromPosition = (y: number, containerRect: DOMRect) => {
-    const relativeY = y - containerRect.top
-    const hourHeight = currentZoom.pixelsPerHour
-    const totalHours = relativeY / hourHeight
-    return Math.max(0, Math.min(24, totalHours))
-  }
+
 
   const handleCellClick = (date: Date, timeHour?: number, e?: React.MouseEvent) => {
     // Check if clicking on an existing event
@@ -180,21 +153,17 @@ export function EventCalendar({
   }
 
   const handleEventCreate = (eventData: Omit<TCalendarEvent, "id">) => {
-    console.log("[v0] handleEventCreate called with:", eventData)
     const newEvent: TCalendarEvent = {
       ...eventData,
-      id: `event-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `event-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
     }
-    console.log("[v0] Calling onEventAdd with:", newEvent)
     onEventAdd?.(newEvent)
   }
 
   const handleEventClick = (event: TCalendarEvent, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!isResizingEvent) {
-      setEditingEvent(event)
-      setIsEditingEvent(true)
-    }
+    setEditingEvent(event)
+    setIsEditingEvent(true)
   }
 
   const handleEventUpdate = (updatedEvent: TCalendarEvent) => {
@@ -289,7 +258,8 @@ export function EventCalendar({
     e.preventDefault()
     const rect = e.currentTarget.getBoundingClientRect()
     const relativeY = e.clientY - rect.top
-    const minuteOffset = (relativeY / 64) * 60 // 64px per hour
+    const hourHeight = window.innerWidth >= 640 ? 64 : 48 // Responsive height
+    const minuteOffset = (relativeY / hourHeight) * 60
     const time = hour + minuteOffset / 60
 
     setIsSelecting(true)
@@ -305,7 +275,8 @@ export function EventCalendar({
 
     const rect = e.currentTarget.getBoundingClientRect()
     const relativeY = e.clientY - rect.top
-    const minuteOffset = (relativeY / 64) * 60
+    const hourHeight = window.innerWidth >= 640 ? 64 : 48 // Responsive height
+    const minuteOffset = (relativeY / hourHeight) * 60
     const time = hour + minuteOffset / 60
 
     setSelectionEnd({ date: day, time })
@@ -354,27 +325,32 @@ export function EventCalendar({
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 })
     const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
 
-    // Calculate current time position for the red line
+    // Calculate current time position for the red line (responsive height)
     const currentHour = currentTime.getHours()
     const currentMinute = currentTime.getMinutes()
-    const currentTimePosition = (currentHour + currentMinute / 60) * 64 // 64px per hour
+    const hourHeight = window.innerWidth >= 640 ? 64 : 48 // 64px on sm+, 48px on mobile
+    const currentTimePosition = (currentHour + currentMinute / 60) * hourHeight
 
     return (
       <div className="flex-1 relative">
-<div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b shadow-sm">
-          <div className="grid grid-cols-[80px_1fr]">
-            <div className="border-r p-2 flex items-center justify-center">
-              <div className="bg-primary/10 border border-primary/20 rounded px-2 py-1 text-xs font-medium text-primary">
-                Week View
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b shadow-sm">
+          <div className="grid grid-cols-[60px_1fr] sm:grid-cols-[80px_1fr]">
+            <div className="border-r p-1 sm:p-2 flex items-center justify-center">
+              <div className="bg-primary/10 border border-primary/20 rounded px-1 sm:px-2 py-1 text-xs font-medium text-primary">
+                <span className="hidden sm:inline">Week View</span>
+                <span className="sm:hidden">Week</span>
               </div>
             </div>
             <div className="grid grid-cols-7">
               {weekDays.map((day) => (
-                <div key={day.toISOString()} className="p-2 text-center border-r last:border-r-0">
-                  <div className="text-sm font-medium text-muted-foreground">{format(day, "EEE")}</div>
+                <div key={day.toISOString()} className="p-1 sm:p-2 text-center border-r last:border-r-0">
+                  <div className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    <span className="hidden sm:inline">{format(day, "EEE")}</span>
+                    <span className="sm:hidden">{format(day, "EEEEE")}</span>
+                  </div>
                   <div
                     className={cn(
-                      "text-lg font-semibold transition-colors duration-200",
+                      "text-sm sm:text-lg font-semibold transition-colors duration-200",
                       isSameDay(day, new Date()) && "text-primary",
                     )}
                   >
@@ -386,14 +362,15 @@ export function EventCalendar({
           </div>
         </div>
 
-        <div className="grid grid-cols-[80px_1fr] flex-1 relative">
+        <div className="grid grid-cols-[60px_1fr] sm:grid-cols-[80px_1fr] flex-1 relative">
           <div className="border-r relative bg-gradient-to-r from-background to-muted/20">
             {Array.from({ length: 24 }, (_, hour) => (
               <div
                 key={hour}
-                className="border-b border-border/30 h-16 flex items-center justify-center text-xs text-muted-foreground"
+                className="border-b border-border/30 h-12 sm:h-16 flex items-center justify-center text-xs text-muted-foreground"
               >
-                {hour.toString().padStart(2, "0")}:00
+                <span className="hidden sm:inline">{hour.toString().padStart(2, "0")}:00</span>
+                <span className="sm:hidden">{hour.toString().padStart(2, "0")}</span>
               </div>
             ))}
           </div>
@@ -421,14 +398,14 @@ export function EventCalendar({
               </div>
             )}
 
-            {weekDays.map((day, dayIndex) => {
+            {weekDays.map((day) => {
               const dayEvents = getEventsForDay(day)
               return (
                 <div key={day.toISOString()} className="border-r border-b last:border-r-0 relative">
                   {Array.from({ length: 24 }, (_, hour) => (
                     <div
                       key={hour}
-                      className="border-b border-border/20 hover:bg-accent/30 transition-colors duration-150 h-16 cursor-pointer"
+                      className="border-b border-border/20 hover:bg-accent/30 transition-colors duration-150 h-12 sm:h-16 cursor-pointer"
                       onMouseDown={(e) => handleTimeSlotMouseDown(day, hour, e)}
                       onMouseMove={(e) => handleTimeSlotMouseMove(day, hour, e)}
                       onMouseUp={handleTimeSlotMouseUp}
@@ -439,8 +416,8 @@ export function EventCalendar({
                     <div
                       className="absolute left-2 right-2 bg-primary/20 border-2 border-primary rounded pointer-events-none z-10"
                       style={{
-                        top: `${Math.min(selectionStart.time, selectionEnd.time) * 64}px`,
-                        height: `${Math.abs(selectionEnd.time - selectionStart.time) * 64}px`,
+                        top: `${Math.min(selectionStart.time, selectionEnd.time) * (window.innerWidth >= 640 ? 64 : 48)}px`,
+                        height: `${Math.abs(selectionEnd.time - selectionStart.time) * (window.innerWidth >= 640 ? 64 : 48)}px`,
                       }}
                     >
                       <div className="flex items-center justify-center h-full text-xs font-medium text-primary">
@@ -454,8 +431,9 @@ export function EventCalendar({
                       const startHour = event.start.getHours()
                       const startMinute = event.start.getMinutes()
                       const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60 * 60)
-                      const top = (startHour + startMinute / 60) * 64
-                      const height = Math.max(duration * 64, 32)
+                      const hourHeight = window.innerWidth >= 640 ? 64 : 48 // Responsive height
+                      const top = (startHour + startMinute / 60) * hourHeight
+                      const height = Math.max(duration * hourHeight, 24) // Minimum height responsive too
 
                       return (
                         <Card
@@ -604,53 +582,54 @@ export function EventCalendar({
 
   return (
     <>
-      <div className="h-full flex flex-col">
-        <div className="sticky top-0 z-40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <h2 className="text-lg sm:text-xl font-semibold transition-all duration-300">{getViewTitle()}</h2>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("prev")}
-                className="transition-all duration-200 hover:scale-105"
-                aria-label={`Previous ${view}`}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("next")}
-                className="transition-all duration-200 hover:scale-105"
-                aria-label={`Next ${view}`}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentDate(new Date())}
-                className="ml-2 transition-all duration-200 hover:scale-105"
-              >
-                Today
-              </Button>
-              {view === "week" && (
+      <div className="h-full min-h-[400px] flex flex-col">
+        <div className="sticky top-0 z-40 flex flex-col gap-2 p-2 sm:p-4 border-b bg-background/95 backdrop-bl-3 supports-[backdrop-filter]:bg-background/70">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <h2 className="text-base sm:text-lg lg:text-xold transition-all duration-300 truncate">{getViewTitle()}</h2>
+              <div className="flex items-center gap-1 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={jumpToCurrentTime}
-                  className="ml-1 transition-all duration-200 hover:scale-105"
-                  title="Jump to current time"
+                  onClick={() => navigate("prev")}
+                  className="transition-all duration-200 hover:scale-105 h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
+                  aria-label={`Previous ${view}`}
                 >
-                  <Clock className="h-4 w-4" />
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
-              )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("next")}
+                  className="transition-all duration-200 hover:scale-105 h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
+                  aria-label={`Next ${view}`}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentDate(new Date())}
+                  className="ml-1 sm:ml-2 transition-all duration-200 hover:scale-105 text-xs sm:text-sm px-2 sm:px-3"
+                >
+                  Today
+                </Button>
+                {view === "week" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={jumpToCurrentTime}
+                    className="ml-1 transition-all duration-200 hover:scale-105 h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
+                    title="Jump to current time"
+                  >
+                    <Clock className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center border rounded-md p-1" role="tablist" aria-label="Calendar views">
+            <div className="flex items-center gap-2 flex-wrap">
+              <diclassName="f"flex items-center border rounded-md p-1" role="tablist" aria-label="Calendar views">
               {([view === "week" ? "week" : "day", "month"] as CalendarView[]).map((viewOption) => (
                 <Button
                   key={viewOption}
@@ -658,7 +637,7 @@ export function EventCalendar({
                   size="sm"
                   onClick={() => setView(viewOption)}
                   className={cn(
-                    "transition-all duration-200 capitalize text-xs sm:text-sm px-2 sm:px-3",
+                    "transition-all duration-200 capitalize text-xs px-2 h-8",
                     view === viewOption && "shadow-sm",
                   )}
                   role="tab"
@@ -672,7 +651,7 @@ export function EventCalendar({
 
             <Button
               size="sm"
-              className="transition-all duration-200 hover:scale-105 text-xs sm:text-sm"
+              className="transition-all duration-200 hover:scale-105 text-xs h-8 px-2 sm:px-3"
               onClick={() => {
                 const now = new Date()
                 setEventCreationStart(now)
@@ -682,41 +661,43 @@ export function EventCalendar({
             >
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Add Event</span>
-            </Button>
+              <span className="sm:hidde
+          </div>>Add</span>
+              </Button>
+            </div>
           </div>
-        </div>
 
         <div
           id="calendar-content"
-          ref={calendarContentRef}
-          className="flex-1 overflow-auto transition-all duration-300 ease-in-out"
-          role="tabpanel"
-          aria-labelledby="calendar-header"
+              ref={calendarContentRef}
+              className="flex-1 min-h-0 overflow-auto transition-all duration-300 ease-in-out"
+              role="tabpanel"
+              aria-labelledby="calendar-header"
         >
-          {renderCurrentView()}
+              {renderCurrentView()}
+          </div>
         </div>
-      </div>
 
-      <EventCreationModal
-        isOpen={isCreatingEvent}
-        onClose={() => setIsCreatingEvent(false)}
-        onSave={handleEventCreate}
-        initialStart={eventCreationStart}
-        initialEnd={eventCreationEnd}
-        userId={userId}
-        onCalendarCreated={onCalendarCreated}
-      />
+        <EventCreationModal
+          isOpen={isCreatingEvent}
+          onClose={() => setIsCreatingEvent(false)}
+          onSave={handleEventCreate}
+          initialStart={eventCreationStart}
+          initialEnd={eventCreationEnd}
+          userId={userId}
+          onCalendarCreated={onCalendarCreated}
+        />
 
-      <EventEditModal
-        isOpen={isEditingEvent}
-        onClose={() => {
-          setIsEditingEvent(false)
-          setEditingEvent(null)
-        }}
-        onSave={handleEventUpdate}
-        onDelete={handleEventDelete}
-        event={editingEvent}
-      />
-    </>
-  )
+        <EventEditModal
+          isOpen={isEditingEvent}
+          onClose={() => {
+            setIsEditingEvent(false)
+            setEditingEvent(null)
+          }}
+          onSave={handleEventUpdate}
+          onDelete={handleEventDelete}
+          event={editingEvent}
+        />
+      </>
+      )
 }

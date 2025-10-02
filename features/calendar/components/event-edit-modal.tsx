@@ -42,7 +42,7 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
   const [startTime, setStartTime] = useState("")
   const [endDate, setEndDate] = useState("")
   const [endTime, setEndTime] = useState("")
-  const [color, setColor] = useState("blue")
+  const [selectedCalendarId, setSelectedCalendarId] = useState("")
   const [allDay, setAllDay] = useState(false)
 
   const [isRecurring, setIsRecurring] = useState(false)
@@ -61,7 +61,9 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
       setStartTime(format(event.start, "HH:mm"))
       setEndDate(format(event.end, "yyyy-MM-dd"))
       setEndTime(format(event.end, "HH:mm"))
-      setColor(event.color)
+      // Find calendar by color to get the ID
+      const calendar = calendars.find(cal => cal.color === event.color)
+      setSelectedCalendarId(calendar?.id || "")
       setAllDay(event.allDay || false)
 
       setIsRecurring(event.isRecurring || false)
@@ -88,6 +90,9 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
     const start = allDay ? new Date(`${startDate}T00:00:00`) : new Date(`${startDate}T${startTime}:00`)
 
     const end = allDay ? new Date(`${endDate || startDate}T23:59:59`) : new Date(`${endDate}T${endTime}:00`)
+
+    const selectedCalendar = calendars.find(cal => cal.id === selectedCalendarId)
+    const color = selectedCalendar?.color || event.color
 
     onSave({
       ...event,
@@ -298,13 +303,13 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
 
           <div className="space-y-2">
             <Label htmlFor="event-calendar">Calendar</Label>
-            <Select value={color} onValueChange={setColor}>
+            <Select value={selectedCalendarId} onValueChange={setSelectedCalendarId}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {availableCalendars.map((calendar) => (
-                  <SelectItem key={calendar.id} value={calendar.color}>
+                  <SelectItem key={calendar.id} value={calendar.id.toString()}>
                     <div className="flex items-center gap-2">
                       <div
                         className={`w-3 h-3 rounded-full ${

@@ -42,6 +42,18 @@ export function withAuth<P extends object>(WrappedComponent: React.ComponentType
       return null
     }
 
+    // Only render if we have a user (should be guaranteed by auth checks above)
+    if (!user) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h3 className="text-lg font-medium text-muted-foreground">Authentication Error</h3>
+            <p className="text-sm text-muted-foreground">Unable to load user data</p>
+          </div>
+        </div>
+      )
+    }
+
     // Render the wrapped component with user prop
     return <WrappedComponent {...props} user={user} />
   }

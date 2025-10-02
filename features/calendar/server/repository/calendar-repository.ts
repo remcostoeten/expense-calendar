@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm"
 
 export type TCalendar = TBaseEntity & {
   name: string
-  description?: string | null
+  description: string | null
   color: string
   userId: number
   isDefault: boolean

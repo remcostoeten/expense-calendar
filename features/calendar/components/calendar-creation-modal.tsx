@@ -45,7 +45,7 @@ export function CalendarCreationModal({
       onCalendarCreated?.()
     },
     onError: (error) => {
-      console.error("[v0] Failed to create calendar:", error)
+      console.error("Failed to create calendar:", error)
     },
   })
 

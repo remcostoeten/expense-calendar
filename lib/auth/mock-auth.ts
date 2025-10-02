@@ -1,13 +1,24 @@
 import type { User } from "@/lib/types/auth"
 
 // Mock user data - easily replaceable with real auth
-export const MOCK_USER: User = {
-  id: 123,
-  name: "John Doe",
-  email: "john.doe@example.com",
-  createdAt: new Date("2024-01-15T10:30:00Z"),
-  deletedAt: null,
-}
+export const MOCK_USERS: User[] = [
+  {
+    id: 123,
+    name: "John Doe", 
+    email: "john.doe@example.com",
+    createdAt: new Date("2024-01-15T10:30:00Z"),
+    deletedAt: null,
+  },
+  {
+    id: 456,
+    name: "Jane Smith",
+    email: "jane.smith@example.com", 
+    createdAt: new Date("2024-01-20T14:20:00Z"),
+    deletedAt: null,
+  }
+]
+
+export const MOCK_USER: User = MOCK_USERS[0] // Default to John Doe
 
 // Mock auth service - replace this entire file with real auth implementation
 export class MockAuthService {

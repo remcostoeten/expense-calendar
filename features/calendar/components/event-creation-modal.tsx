@@ -42,7 +42,7 @@ export function EventCreationModal({
   const [startTime, setStartTime] = useState("")
   const [endDate, setEndDate] = useState("")
   const [endTime, setEndTime] = useState("")
-  const [color, setColor] = useState("blue")
+  const [selectedCalendarId, setSelectedCalendarId] = useState("")
   const [allDay, setAllDay] = useState(false)
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
 
@@ -65,10 +65,10 @@ export function EventCreationModal({
   }, [initialStart, initialEnd])
 
   useEffect(() => {
-    if (calendars.length > 0) {
-      setColor(calendars[0].color)
+    if (calendars.length > 0 && !selectedCalendarId) {
+      setSelectedCalendarId(calendars[0].id)
     }
-  }, [calendars])
+  }, [calendars, selectedCalendarId])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,6 +76,9 @@ export function EventCreationModal({
     const start = allDay ? new Date(`${startDate}T00:00:00`) : new Date(`${startDate}T${startTime}:00`)
 
     const end = allDay ? new Date(`${endDate || startDate}T23:59:59`) : new Date(`${endDate}T${endTime}:00`)
+
+    const selectedCalendar = calendars.find(cal => cal.id === selectedCalendarId)
+    const color = selectedCalendar?.color || "blue"
 
     const eventData: Omit<TCalendarEvent, "id"> = {
       title,
@@ -102,6 +105,7 @@ export function EventCreationModal({
     setTitle("")
     setDescription("")
     setLocation("")
+    setSelectedCalendarId(calendars.length > 0 ? calendars[0].id : "")
     setStartDate("")
     setStartTime("")
     setEndDate("")
@@ -301,13 +305,13 @@ export function EventCreationModal({
             <div className="space-y-2">
               <Label htmlFor="event-calendar">Calendar</Label>
               <div className="flex gap-2">
-                <Select value={color} onValueChange={setColor}>
+                <Select value={selectedCalendarId} onValueChange={setSelectedCalendarId}>
                   <SelectTrigger className="flex-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {availableCalendars.map((calendar) => (
-                      <SelectItem key={calendar.id} value={calendar.color}>
+                      <SelectItem key={calendar.id} value={calendar.id.toString()}>
                         <div className="flex items-center gap-2">
                           <div
                             className={`w-3 h-3 rounded-full ${
@@ -349,7 +353,13 @@ export function EventCreationModal({
       <CalendarCreationModal
         isOpen={isCalendarModalOpen}
         onClose={() => setIsCalendarModalOpen(false)}
-        onSuccess={(newColor) => setColor(newColor)}
+        onSuccess={(newColor) => {
+          // Find the newly created calendar and select it
+          const newCalendar = calendars.find(cal => cal.color === newColor)
+          if (newCalendar) {
+            setSelectedCalendarId(newCalendar.id)
+          }
+        }}
         userId={userId}
         onCalendarCreated={onCalendarCreated}
       />

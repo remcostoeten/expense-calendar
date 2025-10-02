@@ -4,61 +4,37 @@ import { useMemo, useEffect, useRef } from "react"
 import useSWR from "swr"
 import { type TCalendarEvent, EventCalendar } from "./event-calendar"
 import { useCalendar } from "@/server/api-hooks/use-calendar"
-import { useUserSettings } from "@/server/api-hooks/use-user-settings"
-import { getAllUserEventsAction } from "../server/actions/get-all-user-events-action"
-import { getCalendarsAction } from "../server/actions/get-calendars-action"
-import { getUserSettingsAction } from "../server/actions/get-user-settings-action"
-import type { Event, Calendar } from "@/server/schema"
-import { useCalendarStore } from "@/stores/calendar-store"
+import { useCalendarSync } from "@/server/api-hooks/use-calendar-sync"
+import { getDefaultCalendars } from "../utils/calendar-utils"
 
-export const etiquettes = [
-  {
-    id: "my-events",
-    name: "My Events",
-    color: "emerald",
-    isVisible: true,
-  },
-  {
-    id: "marketing-team",
-    name: "Marketing Team",
-    color: "orange",
-    isVisible: true,
-  },
-  {
-    id: "interviews",
-    name: "Interviews",
-    color: "violet",
-    isVisible: true,
-  },
-  {
-    id: "events-planning",
-    name: "Events Planning",
-    color: "blue",
-    isVisible: true,
-  },
-  {
-    id: "holidays",
-    name: "Holidays",
-    color: "rose",
-    isVisible: true,
-  },
-]
-
-interface BigCalendarProps {
-  userId: string
-}
-
-const colorMap: Record<string, string> = {
+const COLOR_MAP: Record<string, string> = {
   "#10b981": "emerald",
   "#f97316": "orange",
   "#8b5cf6": "violet",
   "#3b82f6": "blue",
   "#f43f5e": "rose",
+  "#06b6d4": "cyan",
+  "#ec4899": "pink",
+  "#ef4444": "red",
+  "#f59e0b": "amber",
+  "#14b8a6": "teal",
+  "#6366f1": "indigo",
+  "#d946ef": "purple",
 }
+import { getAllUserEventsAction } from "../server/actions/get-all-user-events-action"
+import { getUserSettingsAction } from "../server/actions/get-user-settings-action"
+import type { Event, Calendar } from "@/server/schema"
+import { useCalendarStore } from "@/stores/calendar-store"
+
+interface BigCalendarProps {
+  userId: string
+}
+
+
 
 function mapEventToCalendarEvent(event: Event, calendars: Calendar[]): TCalendarEvent {
   const calendar = calendars.find((cal) => cal.id === event.calendarId)
-  const color = calendar?.color ? colorMap[calendar.color] || "blue" : "blue"
+  const color = calendar?.color ? COLOR_MAP[calendar.color] || "blue" : "blue"
 
   return {
     id: event.id.toString(),
@@ -74,27 +50,60 @@ function mapEventToCalendarEvent(event: Event, calendars: Calendar[]): TCalendar
 
 export default function BigCalendar({ userId }: BigCalendarProps) {
   const calendarHook = useCalendar()
-  const userSettingsHook = useUserSettings()
   const { setShowCurrentTime, setShowRecurringEvents } = useCalendarStore()
   const userIdNum = parseInt(userId, 10)
   const initializationRef = useRef(false)
+  
+  // Debug logging (temporarily enabled)
+  console.log("BigCalendar received userId:", userId, "parsed as:", userIdNum)
+  
+  // Validate user ID
+  if (!userId || isNaN(userIdNum) || userIdNum <= 0) {
+    console.error("Invalid user ID:", { userId, userIdNum })
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-muted-foreground">Invalid User</h3>
+          <p className="text-sm text-muted-foreground">Unable to load calendar data (ID: {userId})</p>
+        </div>
+      </div>
+    )
+  }
+  
+  // Sync calendars from database with store
+  const { calendars: dbCalendars, mutate: mutateCalendars } = useCalendarSync(userIdNum)
 
-  const { data: calendarsData, mutate: mutateCalendars } = useSWR(`calendars-${userId}`, async () => {
-    const result = await getCalendarsAction(userIdNum)
-    return result.success ? result.data : []
-  })
 
-  const { data: eventsData, mutate: mutateEvents } = useSWR(`events-${userId}`, async () => {
-    const result = await getAllUserEventsAction(userIdNum)
-    return result.success ? result.data : []
-  })
 
-  const { data: userSettingsData } = useSWR(`user-settings-${userId}`, async () => {
-    const result = await getUserSettingsAction(userIdNum)
-    return result.success ? result.data : null
-  })
+  const { data: eventsData, mutate: mutateEvents } = useSWR(
+    `events-${userId}`, 
+    async () => {
+      const result = await getAllUserEventsAction(userIdNum)
+      return result.success ? result.data : []
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      refreshInterval: 0,
+      dedupingInterval: 5000,
+    }
+  )
 
-  const calendars = calendarsData || []
+  const { data: userSettingsData } = useSWR(
+    `user-settings-${userId}`, 
+    async () => {
+      const result = await getUserSettingsAction(userIdNum)
+      return result.success ? result.data : null
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      refreshInterval: 0,
+      dedupingInterval: 5000,
+    }
+  )
+
+  const calendars = dbCalendars
   const events = eventsData || []
 
   // Load user settings into store when available
@@ -108,62 +117,45 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
   useEffect(() => {
     const initializeCalendars = async () => {
       // Only initialize once and only if we have calendar data and no calendars exist
-      if (initializationRef.current || !calendarsData || calendars.length > 0) {
+      if (initializationRef.current || calendars.length > 0) {
         return
       }
 
       initializationRef.current = true
-      console.log("[v0] No calendars found, creating default calendars...")
 
-      const defaultCalendars = [
-        { name: "My Events", color: "#10b981", description: "Personal events" },
-        { name: "Marketing Team", color: "#f97316", description: "Marketing team events" },
-        { name: "Interviews", color: "#8b5cf6", description: "Interview schedules" },
-        { name: "Events Planning", color: "#3b82f6", description: "Event planning" },
-        { name: "Holidays", color: "#f43f5e", description: "Holidays and time off" },
-      ]
+      const defaultCalendars = getDefaultCalendars(userIdNum)
 
       try {
         for (const cal of defaultCalendars) {
           await calendarHook.createCalendar.execute({
-            userId: userIdNum,
+            userId: cal.userId,
             name: cal.name,
             description: cal.description,
             color: cal.color,
-            isDefault: cal.name === "My Events",
+            isDefault: cal.isDefault,
           })
         }
-        console.log("[v0] Default calendars created successfully")
         await mutateCalendars()
       } catch (error) {
-        console.error("[v0] Error creating default calendars:", error)
+        console.error("Error creating default calendars:", error)
         // Reset the flag on error so it can retry
         initializationRef.current = false
       }
     }
 
     initializeCalendars()
-  }, [calendarsData, calendars.length, userIdNum])
+  }, [calendars.length, userIdNum]) // Removed calendarHook.createCalendar and mutateCalendars to prevent loops
 
   const calendarEvents = useMemo(() => {
     return events.map((event) => mapEventToCalendarEvent(event, calendars))
   }, [events, calendars])
 
   const handleEventAdd = async (event: TCalendarEvent) => {
-    console.log("[v0] Creating event:", event)
-    console.log("[v0] Available calendars:", calendars)
-
-    const calendar = calendars.find((cal) => colorMap[cal.color || ""] === event.color)
+    const calendar = calendars.find((cal) => COLOR_MAP[cal.color || ""] === event.color)
     if (!calendar) {
-      console.error("[v0] No calendar found for color:", event.color)
-      console.error(
-        "[v0] Available colors:",
-        calendars.map((c) => ({ id: c.id, color: c.color, mapped: colorMap[c.color || ""] })),
-      )
+      console.error("No calendar found for color:", event.color)
       return
     }
-
-    console.log("[v0] Using calendar:", calendar)
 
     try {
       const result = await calendarHook.createEvent.execute({
@@ -177,11 +169,9 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
         allDay: event.allDay,
       })
 
-      console.log("[v0] Event created successfully:", result)
       await mutateEvents()
-      console.log("[v0] Events refreshed")
     } catch (error) {
-      console.error("[v0] Error creating event:", error)
+      console.error("Error creating event:", error)
     }
   }
 
@@ -207,7 +197,6 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
   }
 
   const handleCalendarCreated = async () => {
-    console.log("[v0] Calendar created, refreshing calendars list")
     await mutateCalendars()
   }
 

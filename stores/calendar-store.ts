@@ -39,6 +39,7 @@ interface CalendarState {
   addCalendar: (calendar: Omit<Calendar, "id">) => void
   updateCalendar: (id: string, updates: Partial<Calendar>) => void
   deleteCalendar: (id: string) => void
+  setCalendars: (calendars: Calendar[]) => void
 
   // Event actions
   addEvent: (event: Omit<CalendarEvent, "id">) => void
@@ -60,13 +61,8 @@ interface CalendarState {
   getEventsForDate: (date: Date) => CalendarEvent[]
 }
 
-const defaultCalendars: Calendar[] = [
-  { id: "my-events", name: "My Events", color: "emerald", isVisible: true, isActive: true },
-  { id: "marketing-team", name: "Marketing Team", color: "orange", isVisible: true, isActive: true },
-  { id: "interviews", name: "Interviews", color: "violet", isVisible: true, isActive: true },
-  { id: "events-planning", name: "Events Planning", color: "blue", isVisible: true, isActive: true },
-  { id: "holidays", name: "Holidays", color: "rose", isVisible: true, isActive: true },
-]
+// Calendars will be loaded from database via useCalendarSync
+const defaultCalendars: Calendar[] = []
 
 export const useCalendarStore = create<CalendarState>()(
   persist(
@@ -95,6 +91,10 @@ export const useCalendarStore = create<CalendarState>()(
         set((state) => ({
           calendars: state.calendars.filter((cal) => cal.id !== id),
         }))
+      },
+
+      setCalendars: (calendars) => {
+        set({ calendars })
       },
 
       // Event actions
