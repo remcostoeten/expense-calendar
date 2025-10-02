@@ -10,9 +10,6 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-    forceSwcTransforms: true,
-  },
   trailingSlash: false,
 };
 
