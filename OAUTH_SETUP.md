@@ -15,11 +15,11 @@ NEXTAUTH_SECRET="your-secret-key"
 # Google OAuth
 GOOGLE_CLIENT_ID="your-google-client-id.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
-# Note: GOOGLE_REDIRECT_URI will be auto-configured as http://localhost:3000/api/auth/google/callback
+GOOGLE_REDIRECT_URI="http://localhost:3000/api/auth/google/callback"
 
 # Outlook/Microsoft OAuth
-OUTLOOK_CLIENT_ID="2eecd07c-7f93-400f-8f0e-5ed1fa373355"
-OUTLOOK_CLIENT_SECRET="tvc8Q~ZtJjhvP4qB25~R8ua2PBmmDcziwWmwDb.2"
+OUTLOOK_CLIENT_ID="your-outlook-client-id"
+OUTLOOK_CLIENT_SECRET="your-outlook-client-secret"
 OUTLOOK_REDIRECT_URI="http://localhost:3000/api/auth/outlook/callback"
 
 # Apple Calendar (App-Specific Password)

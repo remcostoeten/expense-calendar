@@ -45,7 +45,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
-function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers: {
+function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers?: {
   onReorder: (calendarId: string, direction: 'up' | 'down') => void
   onEdit: (calendar: any) => void
   onDelete: (calendarId: string) => void
@@ -193,9 +193,9 @@ function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers: {
               <div key={calendar.id} data-calendar-id={calendar.id}>
                 <CalendarContextMenu
                   calendar={calendar}
-                  onReorder={contextMenuHandlers.onReorder}
-                  onEdit={contextMenuHandlers.onEdit}
-                  onDelete={contextMenuHandlers.onDelete}
+                  onReorder={contextMenuHandlers?.onReorder || (() => {})}
+                  onEdit={contextMenuHandlers?.onEdit || (() => {})}
+                  onDelete={contextMenuHandlers?.onDelete || (() => {})}
                 >
                 <button
                   type="button"
@@ -376,7 +376,7 @@ export function RightSidebarTrigger({
   contextMenuHandlers,
   ...props
 }: React.ComponentProps<typeof Button> & {
-  contextMenuHandlers: {
+  contextMenuHandlers?: {
     onReorder: (calendarId: string, direction: 'up' | 'down') => void
     onEdit: (calendar: any) => void
     onDelete: (calendarId: string) => void
@@ -399,7 +399,7 @@ export function RightSidebarTrigger({
           </Button>
         </SheetTrigger>
         <SheetContent side="right" className="w-80 p-0">
-          <MobileSidebarContent contextMenuHandlers={contextMenuHandlers} />
+          <MobileSidebarContent contextMenuHandlers={contextMenuHandlers!} />
         </SheetContent>
       </Sheet>
     </>
