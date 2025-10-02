@@ -77,7 +77,7 @@ export const events = pgTable(
     calendarIdx: index("events_calendar_idx").on(table.calendarId),
     userIdx: index("events_user_idx").on(table.userId),
     timeIdx: index("events_time_idx").on(table.startTime, table.endTime),
-    // endTimeCheck: check("end_time_after_start_time", sql`${table.endTime} > ${table.startTime}`),
+    endTimeCheck: check("end_time_after_start_time", sql`${table.endTime} > ${table.startTime}`),
   })
 );
 

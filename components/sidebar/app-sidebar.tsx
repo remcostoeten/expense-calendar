@@ -17,12 +17,14 @@ import { CalendarCreationModal } from "@/features/calendar/components/calendar-c
 import SidebarCalendar from "@/features/calendar/components/sidebar-calendar"
 import { ProviderConnectionModal } from "@/features/calendar/components/provider-connection-modal"
 import { CalendarContextMenu } from "@/features/calendar/components/calendar-context-menu"
+import { useTransition } from "react"
 import { useRightSidebarStore } from "@/stores/right-sidebar-store"
 import { type CalendarEvent, useCalendarStore } from "@/stores/calendar-store"
 import { useCalendarData } from "@/features/calendar/contexts/calendar-data-context"
 import { useCalendarSync } from "@/server/api-hooks/use-calendar-sync"
 import { useProviderConnections } from "@/features/calendar/hooks/use-provider-connections"
 import { useCalendarManagement } from "@/server/api-hooks/use-calendar-management"
+import { useKeyboardShortcuts, KeyboardIndicator } from "@/hooks/use-keyboard-shortcuts"
 import { format, isToday, isTomorrow } from "date-fns"
 
 import {
@@ -37,7 +39,6 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -62,13 +63,10 @@ function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers: {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
   const [showPreviousEvents, setShowPreviousEvents] = useState(false)
 
-  // Get userId from calendar data context
   const { userId } = useCalendarData()
 
-  // Get mutate function to refresh calendars after creation
   const { mutate: mutateCalendars } = useCalendarSync(userId || 0)
 
-  // Get provider connections
   const { connections, isLoading: isLoadingConnections } = useProviderConnections(userId || 0)
 
   const upcomingEvents = getUpcomingEvents(5)
@@ -192,13 +190,13 @@ function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers: {
 
           <div className="space-y-2">
             {calendars.map((calendar) => (
-              <CalendarContextMenu
-                key={calendar.id}
-                calendar={calendar}
-                onReorder={contextMenuHandlers.onReorder}
-                onEdit={contextMenuHandlers.onEdit}
-                onDelete={contextMenuHandlers.onDelete}
-              >
+              <div key={calendar.id} data-calendar-id={calendar.id}>
+                <CalendarContextMenu
+                  calendar={calendar}
+                  onReorder={contextMenuHandlers.onReorder}
+                  onEdit={contextMenuHandlers.onEdit}
+                  onDelete={contextMenuHandlers.onDelete}
+                >
                 <button
                   type="button"
                   onClick={() => toggleColorVisibility(calendar.color)}
@@ -234,7 +232,8 @@ function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers: {
                     }`}
                   />
                 </button>
-              </CalendarContextMenu>
+                </CalendarContextMenu>
+              </div>
             ))}
             {calendars.length === 0 && (
               <div className="px-3 py-6 text-sm text-muted-foreground text-center">
@@ -433,6 +432,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Get calendar management hooks
   const calendarManagement = useCalendarManagement()
+  const [isPending, startTransition] = useTransition()
 
   const upcomingEvents = getUpcomingEvents(5)
   const previousEvents = getPreviousEvents(10)
@@ -445,30 +445,33 @@ const formatEventTime = (event: CalendarEvent) => {
 
   // Context menu handlers (shared between desktop and mobile)
   const handleReorderCalendar = (calendarId: string, direction: 'up' | 'down') => {
-    const currentIndex = calendars.findIndex(cal => cal.id === calendarId)
-    if (currentIndex === -1) return
+    startTransition(() => {
+      const currentIndex = calendars.findIndex(cal => cal.id === calendarId)
+      if (currentIndex === -1) return
 
-    let newIndex
-    if (direction === 'up' && currentIndex > 0) {
-      newIndex = currentIndex - 1
-    } else if (direction === 'down' && currentIndex < calendars.length - 1) {
-      newIndex = currentIndex + 1
-    } else {
-      return
-    }
+      let newIndex
+      if (direction === 'up' && currentIndex > 0) {
+        newIndex = currentIndex - 1
+      } else if (direction === 'down' && currentIndex < calendars.length - 1) {
+        newIndex = currentIndex + 1
+      } else {
+        return
+      }
 
-    // Create new order array
-    const reorderedCalendars = [...calendars]
-    const [movedCalendar] = reorderedCalendars.splice(currentIndex, 1)
-    reorderedCalendars.splice(newIndex, 0, movedCalendar)
+      // Create new order array for optimistic update
+      const reorderedCalendars = [...calendars]
+      const [movedCalendar] = reorderedCalendars.splice(currentIndex, 1)
+      reorderedCalendars.splice(newIndex, 0, movedCalendar)
 
-    // Update sort orders
-    const calendarOrders = reorderedCalendars.map((cal, index) => ({
-      id: parseInt(cal.id),
-      sortOrder: index,
-    }))
+      // Update sort orders
+      const calendarOrders = reorderedCalendars.map((cal, index) => ({
+        id: parseInt(cal.id),
+        sortOrder: index,
+      }))
 
-    calendarManagement.reorderCalendars.execute({ calendarOrders })
+      // Execute with optimistic update and useTransition
+      calendarManagement.reorderCalendars.execute({ calendarOrders })
+    })
   }
 
   const handleEditCalendar = (calendar: any) => {
@@ -485,6 +488,42 @@ const formatEventTime = (event: CalendarEvent) => {
   const handleDeleteCalendar = (calendarId: string) => {
     calendarManagement.deleteCalendar.execute({ calendarId: parseInt(calendarId) })
   }
+
+  // Keyboard shortcuts for calendar management (shared between desktop and mobile)
+  const keyboardShortcuts = [
+    {
+      key: "ArrowUp",
+      shift: true,
+      action: () => {
+        // Find the currently focused calendar (if any) and move it up
+        const focusedElement = document.activeElement
+        const calendarItem = focusedElement?.closest('[data-calendar-id]')
+        if (calendarItem) {
+          const calendarId = calendarItem.getAttribute('data-calendar-id')
+          if (calendarId) {
+            handleReorderCalendar(calendarId, 'up')
+          }
+        }
+      }
+    },
+    {
+      key: "ArrowDown",
+      shift: true,
+      action: () => {
+        // Find the currently focused calendar (if any) and move it down
+        const focusedElement = document.activeElement
+        const calendarItem = focusedElement?.closest('[data-calendar-id]')
+        if (calendarItem) {
+          const calendarId = calendarItem.getAttribute('data-calendar-id')
+          if (calendarId) {
+            handleReorderCalendar(calendarId, 'down')
+          }
+        }
+      }
+    }
+  ]
+
+  useKeyboardShortcuts(keyboardShortcuts)
 
   return (
     <div className="group peer text-sidebar-foreground hidden lg:block" data-state={state} data-side="right">
@@ -600,27 +639,36 @@ const formatEventTime = (event: CalendarEvent) => {
             <SidebarGroup className="px-4 mt-6 pt-6 border-t border-border/30 flex-1 min-h-0">
               <div className="flex items-center justify-between flex-shrink-0 mb-4">
                 <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Calendars</SidebarGroupLabel>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-lg transition-all duration-200 hover:scale-105"
-                  onClick={() => setIsCalendarModalOpen(true)}
-                  title="Add new calendar"
-                >
-                  <RiAddLine className="h-4 w-4" />
-                  <span className="sr-only">Add calendar</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <KeyboardIndicator
+                    shortcuts={[
+                      { keys: ["Shift", "↑"], action: "Move up" },
+                      { keys: ["Shift", "↓"], action: "Move down" }
+                    ]}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-lg transition-all duration-200 hover:scale-105"
+                    onClick={() => setIsCalendarModalOpen(true)}
+                    title="Add new calendar"
+                  >
+                    <RiAddLine className="h-4 w-4" />
+                    <span className="sr-only">Add calendar</span>
+                  </Button>
+                </div>
               </div>
               <SidebarGroupContent className="overflow-y-auto">
                 <SidebarMenu className="space-y-2">
                   {calendars.map((calendar) => (
                     <SidebarMenuItem key={calendar.id}>
-                      <CalendarContextMenu
-                        calendar={calendar}
-                        onReorder={handleReorderCalendar}
-                        onEdit={handleEditCalendar}
-                        onDelete={handleDeleteCalendar}
-                      >
+                      <div data-calendar-id={calendar.id}>
+                        <CalendarContextMenu
+                          calendar={calendar}
+                          onReorder={handleReorderCalendar}
+                          onEdit={handleEditCalendar}
+                          onDelete={handleDeleteCalendar}
+                        >
                         <SidebarMenuButton
                           onClick={() => toggleColorVisibility(calendar.color)}
                           className="relative rounded-lg [&>svg]:size-auto justify-between has-focus-visible:border-ring has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px] py-3 px-3 hover:bg-accent/40 transition-all duration-200 border border-transparent hover:border-border/30 group"
@@ -657,7 +705,8 @@ const formatEventTime = (event: CalendarEvent) => {
                             />
                           </div>
                         </SidebarMenuButton>
-                      </CalendarContextMenu>
+                        </CalendarContextMenu>
+                      </div>
                     </SidebarMenuItem>
                   ))}
 

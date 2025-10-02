@@ -23,12 +23,10 @@ export default function Loading() {
             </svg>
           </div>
 
-          {/* Animated ring */}
           <div className="absolute inset-0 rounded-2xl border-2 border-primary/20 animate-ping" />
           <div className="absolute inset-0 rounded-2xl border-2 border-transparent border-t-primary/40 animate-spin" style={{ animationDuration: '1.5s' }} />
         </div>
 
-        {/* Loading text with typewriter effect */}
         <div className="text-center space-y-3">
           <h2 className="text-2xl font-semibold text-foreground/90">
             Loading your calendar

@@ -1,5 +1,6 @@
 "use client"
 
+import { useTransition } from "react"
 import { useApi } from "@/hooks/use-api"
 import { updateCalendarAction, deleteCalendarAction, reorderCalendarsAction } from "@/features/calendar/server/actions/calendar-management-actions"
 import type { Calendar } from "@/server/schema"
@@ -66,7 +67,9 @@ export function useReorderCalendars(options?: {
   onSuccess?: () => void
   onError?: (error: string) => void
 }) {
-  return useApi<ReorderCalendarsInput, void, Calendar[]>({
+  const [isPending, startTransition] = useTransition()
+
+  const apiHook = useApi<ReorderCalendarsInput, void, Calendar[]>({
     action: ({ calendarOrders }) => reorderCalendarsAction(calendarOrders),
     onSuccess: options?.onSuccess,
     onError: options?.onError,
@@ -85,6 +88,17 @@ export function useReorderCalendars(options?: {
       return reorderedCalendars
     },
   })
+
+  return {
+    execute: (input: ReorderCalendarsInput) => {
+      startTransition(() => {
+        apiHook.execute(input)
+      })
+    },
+    isPending,
+    error: apiHook.error,
+    optimisticData: apiHook.optimisticData,
+  }
 }
 
 export function useCalendarManagement() {
