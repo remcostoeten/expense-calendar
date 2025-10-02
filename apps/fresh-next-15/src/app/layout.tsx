@@ -7,6 +7,7 @@ import { Toaster } from 'sonner'
 import { stackServerApp } from './stack'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
+import { TooltipProvider } from '@radix-ui/react-tooltip'
 
 export const metadata: Metadata = {
     title: 'Calendar || Commute tracker',
@@ -22,11 +23,13 @@ export default function RootLayout({
         <StackProvider app={stackServerApp}>
             <html lang='en' suppressHydrationWarning>
                 <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-                    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                        <Suspense fallback={<div>Loading...</div>}>
-                            {children}
-                        </Suspense>
-                    </ThemeProvider>
+                    <TooltipProvider>
+                        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+                            <Suspense fallback={<div>Loading...</div>}>
+                                {children}
+                            </Suspense>
+                        </ThemeProvider>
+                    </TooltipProvider>
                     <Toaster />
                 </body>
             </html>
