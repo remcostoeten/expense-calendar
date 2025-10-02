@@ -1,0 +1,36 @@
+"use server"
+
+import { revalidatePath } from "next/cache"
+import { createEvent } from "../mutations/create-event"
+
+export async function createEventAction(data: {
+  calendarId: number
+  userId: number
+  title: string
+  description?: string
+  startTime: Date
+  endTime: Date
+  location?: string
+  allDay?: boolean
+}) {
+  try {
+    const event = await createEvent({
+      calendarId: data.calendarId,
+      userId: data.userId,
+      title: data.title,
+      description: data.description || null,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      location: data.location || null,
+      allDay: data.allDay || false,
+    })
+    revalidatePath("/dashboard/calendar")
+    return { success: true, data: event }
+  } catch (error) {
+    console.error("Failed to create event:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to create event",
+    }
+  }
+}
