@@ -1,5 +1,5 @@
 "use client"
-import { useUser, useSignOut } from '@stackframe/stack'
+import { useUser } from '@stackframe/stack'
 import { useRouter } from "next/navigation"
 import {
   DropdownMenu,
@@ -20,13 +20,12 @@ interface UserProfileProps {
 
 export function UserProfile({ showName = true, size = "md" }: UserProfileProps) {
   const user = useUser()
-  const signOut = useSignOut()
   const router = useRouter()
 
   const handleSignOut = async () => {
     try {
-      await signOut()
-      router.push("/handler/sign-in")
+      // For Stack Auth, we can redirect to the sign-out handler
+      window.location.href = "/handler/sign-out"
     } catch (error) {
       console.error("Sign out failed:", error)
     }

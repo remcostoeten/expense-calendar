@@ -1,5 +1,5 @@
 "use client"
-import { useUser, useSignOut } from '@stackframe/stack'
+import { useUser } from '@stackframe/stack'
 import { ChevronsUpDown, LogOut, Settings, User } from "lucide-react"
 import {
   DropdownMenu,
@@ -16,14 +16,13 @@ import { useRouter } from "next/navigation"
 export function AuthTeamSwitcher() {
   const { isMobile } = useSidebar()
   const user = useUser()
-  const signOut = useSignOut()
   const router = useRouter()
 
 
   async function handleSignOut() {
     try {
-      await signOut()
-      router.push("/handler/sign-in")
+      // For Stack Auth, we can redirect to the sign-out handler
+      window.location.href = "/handler/sign-out"
     } catch (error) {
       console.error("Sign out failed:", error)
     }
