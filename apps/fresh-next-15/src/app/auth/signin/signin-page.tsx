@@ -50,9 +50,9 @@ export default function SignInPage() {
                 />
               </svg>
             </div>
-            <CardTitle className="text-2xl font-bold">Welcome to Calendar</CardTitle>
+            <CardTitle className="text-2xl font-bold">Welcome to Commute Tracker</CardTitle>
             <CardDescription className="text-base">
-              Sign in to access your calendar and manage your events
+              Sign in to track your commute and manage your allowances
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -52,7 +52,7 @@ export default function SignUpPage() {
             </div>
             <CardTitle className="text-2xl font-bold">Create Your Account</CardTitle>
             <CardDescription className="text-base">
-              Sign up to start managing your calendar and events
+              Sign up to start tracking your commute and allowances
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
