@@ -30,6 +30,7 @@ type TProps = {
         handleTimeSlotMouseMove: (day: Date, hour: number, e: React.MouseEvent) => void
         handleTimeSlotMouseUp: () => { start: Date; end: Date } | null
     }
+    onCellClick?: (date: Date, timeHour?: number, endDate?: Date) => void
     zoom: {
         zoomLevel: number
         getHourHeight: () => number
@@ -48,6 +49,7 @@ export function DayView({
     dragAndDrop,
     timeSelection,
     zoom,
+    onCellClick,
 }: TProps) {
     const dayEvents = getEventsForDay(events, currentDate)
     const hourHeight = zoom.getHourHeight()
@@ -109,7 +111,13 @@ export function DayView({
                                     style={{ height: `${hourHeight}px` }}
                                     onMouseDown={(e) => timeSelection.handleTimeSlotMouseDown(currentDate, hour, e)}
                                     onMouseMove={(e) => timeSelection.handleTimeSlotMouseMove(currentDate, hour, e)}
-                                    onMouseUp={timeSelection.handleTimeSlotMouseUp}
+                                    onMouseUp={() => {
+                                      const result = timeSelection.handleTimeSlotMouseUp()
+                                      if (result && onCellClick) {
+                                        const startHour = result.start.getHours() + result.start.getMinutes() / 60
+                                        onCellClick(result.start, startHour, result.end)
+                                      }
+                                    }}
                                 />
                             ))}
 

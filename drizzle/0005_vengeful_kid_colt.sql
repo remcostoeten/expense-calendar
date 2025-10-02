@@ -1,0 +1,1 @@
+ALTER TABLE "user_settings" ALTER COLUMN "user_id" SET DATA TYPE bigint;

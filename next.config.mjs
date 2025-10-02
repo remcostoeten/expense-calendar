@@ -14,8 +14,6 @@ const nextConfig = {
   experimental: {
     forceSwcTransforms: true,
   },
-  // Disable static optimization completely
-  generateStaticParams: false,
   trailingSlash: false,
 }
 

@@ -15,6 +15,41 @@
       "when": 1759401577229,
       "tag": "0001_fantastic_gideon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759421447033,
+      "tag": "0002_harsh_doctor_octopus",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1759421501181,
+      "tag": "0003_productive_madelyne_pryor",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1759421553887,
+      "tag": "0004_left_squadron_supreme",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1759427282368,
+      "tag": "0005_vengeful_kid_colt",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1759427568387,
+      "tag": "0006_fearless_captain_cross",
+      "breakpoints": true
     }
   ]
 }

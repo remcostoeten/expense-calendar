@@ -2,8 +2,8 @@ import { useEffect } from "react"
 import useSWR from "swr"
 import { useCalendarStore } from "@/stores/calendar-store"
 import { getCalendarsAction } from "@/features/calendar/server/actions/get-calendars-action"
-// import { syncInFromProvider } from "@/features/calendar/server/services/calendar-sync-service"
 import { convertDbCalendarsToStore } from "@/features/calendar/utils/calendar-utils"
+import { syncInFromProvider } from "@/features/calendar/server/services/sync-cal-provider"
 
 export function useCalendarSync(userId: number) {
   const { setCalendars } = useCalendarStore()
@@ -11,9 +11,8 @@ export function useCalendarSync(userId: number) {
   const { data: calendarsData, error, mutate } = useSWR(
     `calendars-${userId}`,
     async () => {
-      // Fetch local + external
       const dbCalendars = await getCalendarsAction(userId)
-            // const externalEvents = await syncInFromProvider(userId)
+      const externalEvents = await syncInFromProvider(userId)
 
       return dbCalendars.success ? dbCalendars.data : []
     },

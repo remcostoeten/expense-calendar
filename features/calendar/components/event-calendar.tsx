@@ -123,7 +123,7 @@ export function EventCalendar({
     return () => clearTimeout(timer)
   }, [jumpToCurrentTime])
 
-  const handleCellClick = useCallback(function handleCellClick(date: Date, timeHour?: number) {
+  const handleCellClick = useCallback(function handleCellClick(date: Date, timeHour?: number, endDate?: Date) {
     const start = timeHour !== undefined
       ? (() => {
         const s = new Date(date)
@@ -132,9 +132,9 @@ export function EventCalendar({
       })()
       : new Date(date.setHours(0, 0, 0, 0))
 
-    const end = timeHour !== undefined
+    const end = endDate || (timeHour !== undefined
       ? new Date(start.getTime() + 60 * 60 * 1000)
-      : new Date(date.setHours(23, 59, 59, 999))
+      : new Date(date.setHours(23, 59, 59, 999)))
 
     setEventCreationStart(start)
     setEventCreationEnd(end)
@@ -181,6 +181,7 @@ export function EventCalendar({
             dragAndDrop={dragAndDrop}
             timeSelection={timeSelection}
             zoom={zoom}
+            onCellClick={handleCellClick}
           />
         )
       case "week":
@@ -190,6 +191,7 @@ export function EventCalendar({
             dragAndDrop={dragAndDrop}
             timeSelection={timeSelection}
             zoom={zoom}
+            onCellClick={handleCellClick}
           />
         )
       case "month":

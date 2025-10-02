@@ -9,6 +9,15 @@ export interface Calendar {
   isActive: boolean
 }
 
+export interface ExternalProvider {
+  id: string
+  name: string
+  provider: string // 'google', 'outlook', 'apple'
+  isConnected: boolean
+  isVisible: boolean
+  color: string
+}
+
 export interface CalendarEvent {
   id: string
   title: string
@@ -30,6 +39,7 @@ export interface CalendarEvent {
 
 interface CalendarState {
   calendars: Calendar[]
+  externalProviders: ExternalProvider[]
   events: CalendarEvent[]
   showCurrentTime: boolean
   showRecurringEvents: boolean
@@ -59,15 +69,48 @@ interface CalendarState {
   getUpcomingEvents: (limit?: number) => CalendarEvent[]
   getPreviousEvents: (limit?: number) => CalendarEvent[]
   getEventsForDate: (date: Date) => CalendarEvent[]
+
+  // External provider actions
+  setExternalProviders: (providers: ExternalProvider[]) => void
+  updateExternalProvider: (id: string, updates: Partial<ExternalProvider>) => void
+  toggleExternalProviderVisibility: (provider: string) => void
+  isExternalProviderVisible: (provider: string) => boolean
 }
 
 // Calendars will be loaded from database via useCalendarSync
 const defaultCalendars: Calendar[] = []
+const defaultExternalProviders: ExternalProvider[] = [
+  {
+    id: 'google-calendar',
+    name: 'Google Calendar',
+    provider: 'google',
+    isConnected: false,
+    isVisible: false,
+    color: 'blue'
+  },
+  {
+    id: 'outlook-calendar',
+    name: 'Outlook Calendar',
+    provider: 'outlook',
+    isConnected: false,
+    isVisible: false,
+    color: 'emerald'
+  },
+  {
+    id: 'apple-calendar',
+    name: 'Apple Calendar',
+    provider: 'apple',
+    isConnected: false,
+    isVisible: false,
+    color: 'violet'
+  }
+]
 
 export const useCalendarStore = create<CalendarState>()(
   persist(
     (set, get) => ({
       calendars: defaultCalendars,
+      externalProviders: defaultExternalProviders,
       events: [],
       showCurrentTime: true,
       showRecurringEvents: true,
@@ -145,51 +188,107 @@ export const useCalendarStore = create<CalendarState>()(
 
       // Query actions
       getUpcomingEvents: (limit = 5) => {
-        const { events, calendars, showRecurringEvents } = get()
+        const { events, calendars, externalProviders, showRecurringEvents } = get()
         const now = new Date()
         return events
           .filter((event) => {
+            // Check if it's a local calendar event
             const calendar = calendars.find((cal) => cal.color === event.color)
-            return calendar?.isVisible && event.start >= now && (!event.isRecurring || showRecurringEvents)
+            if (calendar?.isVisible) return true
+
+            // Check if it's an external provider event
+            const externalProvider = externalProviders.find((provider) => provider.provider === event.color)
+            if (externalProvider?.isVisible && externalProvider?.isConnected) return true
+
+            return false
           })
+          .filter((event) => event.start >= now && (!event.isRecurring || showRecurringEvents))
           .sort((a, b) => a.start.getTime() - b.start.getTime())
           .slice(0, limit)
       },
 
       getPreviousEvents: (limit = 10) => {
-        const { events, calendars, showRecurringEvents } = get()
+        const { events, calendars, externalProviders, showRecurringEvents } = get()
         const now = new Date()
         return events
           .filter((event) => {
+            // Check if it's a local calendar event
             const calendar = calendars.find((cal) => cal.color === event.color)
-            return calendar?.isVisible && event.end < now && (!event.isRecurring || showRecurringEvents)
+            if (calendar?.isVisible) return true
+
+            // Check if it's an external provider event
+            const externalProvider = externalProviders.find((provider) => provider.provider === event.color)
+            if (externalProvider?.isVisible && externalProvider?.isConnected) return true
+
+            return false
           })
+          .filter((event) => event.end < now && (!event.isRecurring || showRecurringEvents))
           .sort((a, b) => b.end.getTime() - a.end.getTime())
           .slice(0, limit)
       },
 
       getEventsForDate: (date: Date) => {
-        const { events, calendars } = get()
+        const { events, calendars, externalProviders } = get()
         const targetDate = new Date(date)
         targetDate.setHours(0, 0, 0, 0)
 
         return events.filter((event) => {
+          // Check if it's a local calendar event
           const calendar = calendars.find((cal) => cal.color === event.color)
-          if (!calendar?.isVisible) return false
+          if (calendar?.isVisible) {
+            const eventStart = new Date(event.start)
+            eventStart.setHours(0, 0, 0, 0)
+            const eventEnd = new Date(event.end)
+            eventEnd.setHours(0, 0, 0, 0)
+            return targetDate >= eventStart && targetDate <= eventEnd
+          }
 
-          const eventStart = new Date(event.start)
-          eventStart.setHours(0, 0, 0, 0)
-          const eventEnd = new Date(event.end)
-          eventEnd.setHours(0, 0, 0, 0)
+          // Check if it's an external provider event
+          const externalProvider = externalProviders.find((provider) => provider.provider === event.color)
+          if (externalProvider?.isVisible && externalProvider?.isConnected) {
+            const eventStart = new Date(event.start)
+            eventStart.setHours(0, 0, 0, 0)
+            const eventEnd = new Date(event.end)
+            eventEnd.setHours(0, 0, 0, 0)
+            return targetDate >= eventStart && targetDate <= eventEnd
+          }
 
-          return targetDate >= eventStart && targetDate <= eventEnd
+          return false
         })
+      },
+
+      // External provider actions
+      setExternalProviders: (providers) => {
+        set({ externalProviders: providers })
+      },
+
+      updateExternalProvider: (id, updates) => {
+        set((state) => ({
+          externalProviders: state.externalProviders.map((provider) =>
+            provider.id === id ? { ...provider, ...updates } : provider
+          ),
+        }))
+      },
+
+      toggleExternalProviderVisibility: (provider) => {
+        set((state) => ({
+          externalProviders: state.externalProviders.map((p) =>
+            p.provider === provider ? { ...p, isVisible: !p.isVisible } : p
+          ),
+        }))
+      },
+
+      isExternalProviderVisible: (provider) => {
+        const { externalProviders } = get()
+        const externalProvider = externalProviders.find((p) => p.provider === provider)
+        return externalProvider?.isVisible ?? false
       },
     }),
     {
       name: "calendar-store",
       partialize: (state) => ({
         calendars: state.calendars,
+        externalProviders: state.externalProviders,
         events: state.events,
         showCurrentTime: state.showCurrentTime,
         showRecurringEvents: state.showRecurringEvents,
