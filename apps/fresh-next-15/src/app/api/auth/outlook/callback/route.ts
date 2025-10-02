@@ -1,7 +1,6 @@
 "use server"
 
 import { NextRequest, NextResponse } from "next/server"
-import { google } from "googleapis"
 import { connectProviderAction } from "@/features/calendar/server/actions/provider-connection-actions"
 import { getAuthenticatedContext } from "@/server/helpers/auth"
 
@@ -29,32 +28,43 @@ export async function GET(request: NextRequest) {
     }
     const { internalUserId } = authResult.value
 
-    // Exchange code for tokens
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI || `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/google/callback`
-    )
+    // Exchange code for tokens using Microsoft Graph
+    const tokenResponse = await fetch("https://login.microsoftonline.com/common/oauth2/v2.0/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: process.env.OUTLOOK_CLIENT_ID || "",
+        client_secret: process.env.OUTLOOK_CLIENT_SECRET || "",
+        code: code,
+        grant_type: "authorization_code",
+        redirect_uri: process.env.OUTLOOK_REDIRECT_URI || `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/outlook/callback`,
+      }),
+    })
 
-    const { tokens } = await oauth2Client.getAccessToken(code)
-    oauth2Client.setCredentials(tokens)
+    if (!tokenResponse.ok) {
+      throw new Error(`Token exchange failed: ${tokenResponse.statusText}`)
+    }
+
+    const tokens = await tokenResponse.json()
 
     if (!tokens.access_token) {
       throw new Error("No access token received")
     }
 
     // Store the tokens
-    await connectProviderAction(internalUserId, "google", {
+    await connectProviderAction(internalUserId, "outlook", {
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token || undefined,
-      expiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : undefined,
+      expiresAt: tokens.expires_in ? new Date(Date.now() + (tokens.expires_in * 1000)) : undefined,
     })
 
     // Redirect back to calendar with success message
-    return NextResponse.redirect(new URL("/dashboard/calendar?success=Google%20Calendar%20connected%20successfully", request.url))
+    return NextResponse.redirect(new URL("/dashboard/calendar?success=Outlook%20Calendar%20connected%20successfully", request.url))
 
   } catch (error) {
-    console.error("Google OAuth callback error:", error)
-    return NextResponse.redirect(new URL(`/dashboard/calendar?error=${encodeURIComponent(`Failed to connect Google Calendar: ${error instanceof Error ? error.message : 'Unknown error'}`)}`, request.url))
+    console.error("Outlook OAuth callback error:", error)
+    return NextResponse.redirect(new URL(`/dashboard/calendar?error=${encodeURIComponent(`Failed to connect Outlook Calendar: ${error instanceof Error ? error.message : 'Unknown error'}`)}`, request.url))
   }
 }

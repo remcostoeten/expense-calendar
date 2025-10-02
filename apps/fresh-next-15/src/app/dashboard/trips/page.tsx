@@ -1,14 +1,8 @@
-import { useUser } from '@stackframe/stack'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export const dynamic = 'force-dynamic'
 
 export default function TripsPage() {
-  const user = useUser()
-
-  if (!user) {
-    return <div>Loading...</div>
-  }
-
   return (
     <div className="flex flex-1 flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
@@ -18,21 +12,33 @@ export default function TripsPage() {
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold">Upcoming Trips</h3>
-          <p className="text-sm text-muted-foreground">Your planned adventures</p>
-          <p className="text-sm text-muted-foreground mt-2">No trips planned yet</p>
-        </div>
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold">Past Trips</h3>
-          <p className="text-sm text-muted-foreground">Your travel memories</p>
-          <p className="text-sm text-muted-foreground mt-2">No past trips recorded</p>
-        </div>
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold">Trip Ideas</h3>
-          <p className="text-sm text-muted-foreground">Places you want to visit</p>
-          <p className="text-sm text-muted-foreground mt-2">Start adding destinations</p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Upcoming Trips</CardTitle>
+            <CardDescription>Your planned adventures</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">No trips planned yet</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Past Trips</CardTitle>
+            <CardDescription>Your travel memories</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">No past trips recorded</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Trip Ideas</CardTitle>
+            <CardDescription>Places you want to visit</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Start adding destinations</p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
