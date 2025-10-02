@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useEffect } from "react"
 import useSWR from "swr"
@@ -19,11 +19,10 @@ export function useCalendarSync(userId: number) {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
       refreshInterval: 0,
-      dedupingInterval: 5000, // Prevent duplicate requests within 5 seconds
+      dedupingInterval: 5000, 
     }
   )
 
-  // Sync database calendars with the store
   useEffect(() => {
     if (calendarsData) {
       const storeCalendars = convertDbCalendarsToStore(calendarsData)

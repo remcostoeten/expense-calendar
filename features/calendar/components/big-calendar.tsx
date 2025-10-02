@@ -6,7 +6,8 @@ import { type TCalendarEvent, EventCalendar } from "./event-calendar"
 import { CalendarShell } from "./calendar-shell"
 import { useCalendar } from "@/server/api-hooks/use-calendar"
 import { useCalendarSync } from "@/server/api-hooks/use-calendar-sync"
-import { getDefaultCalendars } from "../utils/calendar-utils"
+import { useCalendarData } from "../contexts/calendar-data-context"
+import type { Event, Calendar } from "@/server/schema"
 
 const COLOR_MAP: Record<string, string> = {
   "#10b981": "emerald",
@@ -22,10 +23,6 @@ const COLOR_MAP: Record<string, string> = {
   "#6366f1": "indigo",
   "#d946ef": "purple",
 }
-import { getAllUserEventsAction } from "../server/actions/get-all-user-events-action"
-import { getUserSettingsAction } from "../server/actions/get-user-settings-action"
-import type { Event, Calendar } from "@/server/schema"
-import { useCalendarStore } from "@/stores/calendar-store"
 
 interface BigCalendarProps {
   userId: string
@@ -51,12 +48,9 @@ function mapEventToCalendarEvent(event: Event, calendars: Calendar[]): TCalendar
 
 export default function BigCalendar({ userId }: BigCalendarProps) {
   const calendarHook = useCalendar()
-  const { setShowCurrentTime, setShowRecurringEvents } = useCalendarStore()
+  const { events, calendars } = useCalendarData()
   const userIdNum = parseInt(userId, 10)
   const initializationRef = useRef(false)
-  
-  // Debug logging (temporarily enabled)
-  // console.log("BigCalendar received userId:", userId, "parsed as:", userIdNum)
   
   // Validate user ID
   if (!userId || isNaN(userIdNum) || userIdNum <= 0) {
@@ -71,49 +65,12 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
     )
   }
   
-  // Sync calendars from database with store
-  const { calendars: dbCalendars, mutate: mutateCalendars, isLoading: calendarsLoading } = useCalendarSync(userIdNum)
+  // We need mutate functions for updating data after operations
+  const { mutate: mutateCalendars } = useCalendarSync(userIdNum)
+  const { mutate: mutateEvents } = useSWR(`events-${userId}`, null)
 
-  const { data: eventsData, mutate: mutateEvents, isLoading: eventsLoading } = useSWR(
-    `events-${userId}`, 
-    async () => {
-      const result = await getAllUserEventsAction(userIdNum)
-      return result.success ? result.data : []
-    },
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      refreshInterval: 0,
-      dedupingInterval: 5000,
-    }
-  )
-
-  const { data: userSettingsData, isLoading: settingsLoading } = useSWR(
-    `user-settings-${userId}`, 
-    async () => {
-      const result = await getUserSettingsAction(userIdNum)
-      return result.success ? result.data : null
-    },
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      refreshInterval: 0,
-      dedupingInterval: 5000,
-    }
-  )
-
-  const calendars = dbCalendars
-  const events = eventsData || []
-  const isLoading = calendarsLoading || eventsLoading || settingsLoading
+  const isLoading = false // Loading is handled by the wrapper
   const hasData = calendars.length > 0 || events.length > 0
-
-  // Load user settings into store when available
-  useEffect(() => {
-    if (userSettingsData) {
-      setShowCurrentTime(userSettingsData.showCurrentTime ?? true)
-      setShowRecurringEvents(userSettingsData.showRecurringEvents ?? true)
-    }
-  }, [userSettingsData, setShowCurrentTime, setShowRecurringEvents])
 
   useEffect(() => {
     const initializeCalendars = async () => {
@@ -124,18 +81,8 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
 
       initializationRef.current = true
 
-      const defaultCalendars = getDefaultCalendars(userIdNum)
-
       try {
-        for (const cal of defaultCalendars) {
-          await calendarHook.createCalendar.execute({
-            userId: cal.userId,
-            name: cal.name,
-            description: cal.description,
-            color: cal.color,
-            isDefault: cal.isDefault,
-          })
-        }
+        await calendarHook.createDefaultCalendars.execute({ userId: userIdNum })
         await mutateCalendars()
       } catch (error) {
         console.error("Error creating default calendars:", error)
@@ -145,10 +92,10 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
     }
 
     // Only run when we have no calendars and haven't initialized yet
-    if (!initializationRef.current && calendars.length === 0 && !calendarsLoading) {
+    if (!initializationRef.current && calendars.length === 0) {
       initializeCalendars()
     }
-  }, [calendars.length, calendarsLoading, userIdNum])
+  }, [calendars.length, userIdNum, calendarHook.createDefaultCalendars, mutateCalendars])
 
   const calendarEvents = useMemo(() => {
     return events.map((event) => mapEventToCalendarEvent(event, calendars))
@@ -162,7 +109,7 @@ export default function BigCalendar({ userId }: BigCalendarProps) {
     }
 
     try {
-      const result = await calendarHook.createEvent.execute({
+      await calendarHook.createEvent.execute({
         calendarId: calendar.id,
         userId: userIdNum,
         title: event.title,

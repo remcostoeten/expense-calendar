@@ -45,6 +45,7 @@ export function EventCreationModal({
   const [selectedCalendarId, setSelectedCalendarId] = useState("")
   const [allDay, setAllDay] = useState(false)
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
+  const [pendingCalendarColor, setPendingCalendarColor] = useState<string | null>(null)
 
   const [isRecurring, setIsRecurring] = useState(false)
   const [frequency, setFrequency] = useState<"daily" | "weekly" | "monthly" | "yearly">("weekly")
@@ -69,6 +70,17 @@ export function EventCreationModal({
       setSelectedCalendarId(calendars[0].id)
     }
   }, [calendars, selectedCalendarId])
+
+  // Handle selecting newly created calendar
+  useEffect(() => {
+    if (pendingCalendarColor && calendars.length > 0) {
+      const newCalendar = calendars.find(cal => cal.color === pendingCalendarColor)
+      if (newCalendar) {
+        setSelectedCalendarId(newCalendar.id)
+        setPendingCalendarColor(null)
+      }
+    }
+  }, [calendars, pendingCalendarColor])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -354,11 +366,8 @@ export function EventCreationModal({
         isOpen={isCalendarModalOpen}
         onClose={() => setIsCalendarModalOpen(false)}
         onSuccess={(newColor) => {
-          // Find the newly created calendar and select it
-          const newCalendar = calendars.find(cal => cal.color === newColor)
-          if (newCalendar) {
-            setSelectedCalendarId(newCalendar.id)
-          }
+          // Store the color to select when calendars update
+          setPendingCalendarColor(newColor)
         }}
         userId={userId}
         onCalendarCreated={onCalendarCreated}

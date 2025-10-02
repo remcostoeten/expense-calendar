@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        serif: ['Crimson Pro', 'serif'],
+        
       },
       animation: {
         shimmer: 'shimmer 2s linear infinite',

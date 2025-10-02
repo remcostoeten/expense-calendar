@@ -11,7 +11,7 @@ export default function CalendarLoading() {
           <Skeleton className="h-8 w-24" />
           <RightSidebarTrigger />
         </div>
-        <CalendarSkeleton initialView="week" />
+        <CalendarSkeleton initialView="week" currentDate={new Date()} />
       </div>
     </DualSidebarLayout>
   )

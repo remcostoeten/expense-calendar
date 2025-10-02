@@ -7,12 +7,53 @@ import { useCalendarStore } from "@/stores/calendar-store"
 import { cn } from "@/lib/utils"
 import type { DayButton } from "react-day-picker"
 import { getDefaultClassNames } from "react-day-picker"
+import type { Event, Calendar as DbCalendar } from "@/server/schema"
+import { startOfDay, endOfDay, isWithinInterval } from "date-fns"
+import { useCalendarData } from "../contexts/calendar-data-context"
 
-const CustomDayButton = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof DayButton>>(
-  ({ day, modifiers, className, ...props }, forwardedRef) => {
-    const { getEventsForDate } = useCalendarStore()
-    const events = getEventsForDate(day.date)
-    const hasEvents = events.length > 0
+const COLOR_MAP: Record<string, string> = {
+  "#10b981": "emerald",
+  "#f97316": "orange", 
+  "#8b5cf6": "violet",
+  "#3b82f6": "blue",
+  "#f43f5e": "rose",
+  "#06b6d4": "cyan",
+  "#ec4899": "pink",
+  "#ef4444": "red",
+  "#f59e0b": "amber",
+  "#14b8a6": "teal",
+  "#6366f1": "indigo",
+  "#d946ef": "purple",
+}
+
+interface SidebarCalendarProps {
+  events?: Event[]
+  calendars?: DbCalendar[]
+}
+
+const CustomDayButton = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof DayButton> & {
+  events: Event[]
+  calendars: DbCalendar[]
+}>(
+  ({ day, modifiers, className, events, calendars, ...props }, forwardedRef) => {
+    // Get events for this specific day from database events
+    const dayEvents = React.useMemo(() => {
+      const dayStart = startOfDay(day.date)
+      const dayEnd = endOfDay(day.date)
+      
+      return events.filter((event) => {
+        const eventStart = startOfDay(new Date(event.startTime))
+        const eventEnd = endOfDay(new Date(event.endTime))
+        
+        return (
+          isWithinInterval(dayStart, { start: eventStart, end: eventEnd }) ||
+          isWithinInterval(dayEnd, { start: eventStart, end: eventEnd }) ||
+          isWithinInterval(eventStart, { start: dayStart, end: dayEnd })
+        )
+      })
+    }, [day.date, events])
+
+    const hasEvents = dayEvents.length > 0
     const defaultClassNames = getDefaultClassNames()
     const internalRef = React.useRef<HTMLButtonElement>(null)
     const ref = forwardedRef || internalRef
@@ -45,20 +86,32 @@ const CustomDayButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
         />
         {hasEvents && (
           <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5 pointer-events-none z-10">
-            {events.slice(0, 3).map((event, idx) => (
-              <span
-                key={idx}
-                className={cn(
-                  "size-1 rounded-full",
-                  event.color === "emerald" && "bg-emerald-500",
-                  event.color === "orange" && "bg-orange-500",
-                  event.color === "violet" && "bg-violet-500",
-                  event.color === "blue" && "bg-blue-500",
-                  event.color === "rose" && "bg-rose-500",
-                  !["emerald", "orange", "violet", "blue", "rose"].includes(event.color) && "bg-gray-500",
-                )}
-              />
-            ))}
+            {dayEvents.slice(0, 3).map((event, idx) => {
+              const calendar = calendars.find((cal) => cal.id === event.calendarId)
+              const color = calendar?.color ? COLOR_MAP[calendar.color] || "blue" : "blue"
+              
+              return (
+                <span
+                  key={idx}
+                  className={cn(
+                    "size-1 rounded-full",
+                    color === "emerald" && "bg-emerald-500",
+                    color === "orange" && "bg-orange-500",
+                    color === "violet" && "bg-violet-500",
+                    color === "blue" && "bg-blue-500",
+                    color === "rose" && "bg-rose-500",
+                    color === "cyan" && "bg-cyan-500",
+                    color === "pink" && "bg-pink-500",
+                    color === "red" && "bg-red-500",
+                    color === "amber" && "bg-amber-500",
+                    color === "teal" && "bg-teal-500",
+                    color === "indigo" && "bg-indigo-500",
+                    color === "purple" && "bg-purple-500",
+                    !Object.values(COLOR_MAP).includes(color) && "bg-gray-500",
+                  )}
+                />
+              )
+            })}
           </div>
         )}
       </div>
@@ -68,8 +121,20 @@ const CustomDayButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
 
 CustomDayButton.displayName = "CustomDayButton"
 
-export default function SidebarCalendar() {
+export default function SidebarCalendar({ events: propEvents, calendars: propCalendars }: SidebarCalendarProps) {
   const { currentDate, setCurrentDate } = useCalendarStore()
+  const { events: contextEvents, calendars: contextCalendars } = useCalendarData()
+  
+  // Use context data if available, otherwise fall back to props
+  const events = contextEvents.length > 0 ? contextEvents : (propEvents || [])
+  const calendars = contextCalendars.length > 0 ? contextCalendars : (propCalendars || [])
+
+  const CustomDayButtonWithData = React.useCallback(
+    (props: React.ComponentProps<typeof DayButton>) => (
+      <CustomDayButton {...props} events={events} calendars={calendars} />
+    ),
+    [events, calendars]
+  )
 
   return (
     <Calendar
@@ -78,7 +143,7 @@ export default function SidebarCalendar() {
       onSelect={(date) => date && setCurrentDate(date)}
       className="rounded-md border"
       components={{
-        DayButton: CustomDayButton,
+        DayButton: CustomDayButtonWithData,
       }}
     />
   )

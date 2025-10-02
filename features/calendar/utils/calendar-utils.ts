@@ -1,48 +1,44 @@
+import { startOfDay, endOfDay, isWithinInterval } from "date-fns"
+import type { TCalendarEvent } from "../components/event-calendar"
 import type { Calendar as DbCalendar } from "@/server/schema"
 import type { Calendar as StoreCalendar } from "@/stores/calendar-store"
 
-const COLOR_MAP: Record<string, string> = {
-  "#10b981": "emerald",
-  "#f97316": "orange",
-  "#8b5cf6": "violet", 
-  "#3b82f6": "blue",
-  "#f43f5e": "rose",
-  "#06b6d4": "cyan",
-  "#ec4899": "pink",
-  "#ef4444": "red",
-  "#f59e0b": "amber",
-  "#14b8a6": "teal",
-  "#6366f1": "indigo",
-  "#d946ef": "purple",
+export function getEventsForDay(events: TCalendarEvent[], day: Date) {
+  return events.filter((event) => {
+    const eventStart = startOfDay(event.start)
+    const eventEnd = endOfDay(event.end)
+    const dayStart = startOfDay(day)
+    const dayEnd = endOfDay(day)
+
+    return (
+      isWithinInterval(dayStart, { start: eventStart, end: eventEnd }) ||
+      isWithinInterval(dayEnd, { start: eventStart, end: eventEnd }) ||
+      isWithinInterval(eventStart, { start: dayStart, end: dayEnd })
+    )
+  })
 }
 
-const DEFAULT_CALENDAR_COLOR = "#3b82f6"
+export function getColorClasses(color: string) {
+  const colorMap: Record<string, string> = {
+    blue: "bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-200",
+    emerald: "bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-200",
+    orange: "bg-orange-100 border-orange-300 text-orange-800 dark:bg-orange-900/30 dark:border-orange-700 dark:text-orange-200",
+    violet: "bg-violet-100 border-violet-300 text-violet-800 dark:bg-violet-900/30 dark:border-violet-700 dark:text-violet-200",
+    rose: "bg-rose-100 border-rose-300 text-rose-800 dark:bg-rose-900/30 dark:border-rose-700 dark:text-rose-200",
+  }
+  return (
+    colorMap[color] ||
+    "bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+  )
+}
 
 export function convertDbCalendarsToStore(dbCalendars: DbCalendar[]): StoreCalendar[] {
-  return dbCalendars.map((calendar) => ({
-    id: calendar.id.toString(),
-    name: calendar.name,
-    color: COLOR_MAP[calendar.color || DEFAULT_CALENDAR_COLOR] || "blue",
-    isVisible: true, // Default to visible, could be stored in user preferences later
+  return dbCalendars.map((dbCalendar) => ({
+    id: dbCalendar.id.toString(),
+    name: dbCalendar.name,
+    color: dbCalendar.color || "#3b82f6",
+    isVisible: true,
     isActive: true,
   }))
 }
 
-// Default calendars to create when user has none
-const DEFAULT_CALENDARS = [
-  { name: "Personal", color: "#10b981", description: "Personal events and appointments" },
-  { name: "Work", color: "#3b82f6", description: "Work meetings and tasks" },
-  { name: "Family", color: "#f97316", description: "Family events and gatherings" },
-  { name: "Health", color: "#8b5cf6", description: "Medical appointments and fitness" },
-  { name: "Projects", color: "#f43f5e", description: "Side projects and learning" },
-] as const
-
-export function getDefaultCalendars(userId: number): Omit<DbCalendar, "id" | "createdAt" | "updatedAt">[] {
-  return DEFAULT_CALENDARS.map((calendar, index) => ({
-    name: calendar.name,
-    color: calendar.color,
-    description: calendar.description,
-    userId,
-    isDefault: index === 0, // First calendar is default
-  }))
-}

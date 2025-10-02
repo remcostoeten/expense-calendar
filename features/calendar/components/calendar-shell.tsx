@@ -10,6 +10,7 @@ interface CalendarShellProps {
   hasData: boolean
   view?: "day" | "week" | "month" | "year"
   className?: string
+  currentDate?: Date
 }
 
 export function CalendarShell({ 
@@ -17,11 +18,12 @@ export function CalendarShell({
   isLoading, 
   hasData, 
   view = "week",
-  className 
+  className,
+  currentDate = new Date()
 }: CalendarShellProps) {
   // Show skeleton only on initial load (no data yet)
   if (isLoading && !hasData) {
-    return <CalendarSkeleton initialView={view} />
+    return <CalendarSkeleton initialView={view} currentDate={currentDate} />
   }
 
   // Show content with optional loading overlay for subsequent loads
@@ -29,7 +31,7 @@ export function CalendarShell({
     <div className={cn("relative", className)}>
       {children}
       {isLoading && hasData && (
-        <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-none">
+        <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-50 pointer-events-none transition-opacity duration-200">
           <div className="bg-background border rounded-lg p-4 shadow-lg">
             <div className="flex items-center gap-2">
               <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />

@@ -1,6 +1,8 @@
--- This script clears all tables in the database.
-
-DROP TABLE IF EXISTS event_reminders CASCADE;
-DROP TABLE IF EXISTS events CASCADE;
-DROP TABLE IF EXISTS calendars CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
+DO $$ DECLARE
+    r RECORD;
+BEGIN
+    -- drop all tables
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+        EXECUTE 'DROP TABLE IF EXISTS public.' || quote_ident(r.tablename) || ' CASCADE';
+    END LOOP;
+END $$;

@@ -5,6 +5,8 @@ import { createEventAction } from "@/features/calendar/server/actions/create-eve
 import { updateEventAction } from "@/features/calendar/server/actions/update-event-action"
 import { deleteEventAction } from "@/features/calendar/server/actions/delete-event-action"
 import { createCalendarAction } from "@/features/calendar/server/actions/create-calendar-action"
+import { createDefaultCalendarsAction } from "@/features/calendar/server/actions/create-default-calendars-action"
+import { cleanupDuplicateEventsAction } from "@/features/calendar/server/actions/cleanup-duplicate-events-action"
 import type { Event, Calendar } from "@/server/schema"
 
 /**
@@ -106,18 +108,20 @@ export type CreateCalendarInput = {
   isDefault?: boolean
 }
 
+export type CreateDefaultCalendarsInput = {
+  userId: number
+}
+
+export type CleanupDuplicatesInput = {
+  userId: number
+}
+
 export function useCreateEvent(options?: {
   onSuccess?: (event: Event) => void
   onError?: (error: string) => void
 }) {
   return useApi<CreateEventInput, Event, Event[]>({
-    action: async (input) => {
-      const result = await createEventAction(input)
-      if (!result.success) {
-        throw new Error(result.error)
-      }
-      return result.data
-    },
+    action: createEventAction,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentEvents, input) => {
@@ -147,13 +151,7 @@ export function useUpdateEvent(options?: {
   onError?: (error: string) => void
 }) {
   return useApi<UpdateEventInput, Event, Event[]>({
-    action: async (input) => {
-      const result = await updateEventAction(input.eventId, input.data)
-      if (!result.success) {
-        throw new Error(result.error)
-      }
-      return result.data
-    },
+    action: (input) => updateEventAction(input.eventId, input.data),
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentEvents, input) => {
@@ -171,12 +169,7 @@ export function useDeleteEvent(options?: {
   onError?: (error: string) => void
 }) {
   return useApi<DeleteEventInput, void, Event[]>({
-    action: async (input) => {
-      const result = await deleteEventAction(input.eventId)
-      if (!result.success) {
-        throw new Error(result.error || "Failed to delete event")
-      }
-    },
+    action: (input) => deleteEventAction(input.eventId),
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentEvents, input) => {
@@ -192,13 +185,7 @@ export function useCreateCalendar(options?: {
   onError?: (error: string) => void
 }) {
   return useApi<CreateCalendarInput, Calendar, Calendar[]>({
-    action: async (input) => {
-      const result = await createCalendarAction(input)
-      if (!result.success) {
-        throw new Error(result.error)
-      }
-      return result.data
-    },
+    action: createCalendarAction,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentCalendars, input) => {
@@ -220,11 +207,38 @@ export function useCreateCalendar(options?: {
   })
 }
 
+export function useCreateDefaultCalendars(options?: {
+  onSuccess?: (calendars: Calendar[]) => void
+  onError?: (error: string) => void
+}) {
+  return useApi<CreateDefaultCalendarsInput, Calendar[], Calendar[]>({
+    action: createDefaultCalendarsAction,
+    onSuccess: options?.onSuccess,
+    onError: options?.onError,
+    optimisticUpdate: (currentCalendars) => {
+      return currentCalendars
+    },
+  })
+}
+
+export function useCleanupDuplicates(options?: {
+  onSuccess?: (result: { duplicateGroups: number; deletedEvents: number }) => void
+  onError?: (error: string) => void
+}) {
+  return useApi<CleanupDuplicatesInput, { duplicateGroups: number; deletedEvents: number }>({
+    action: (input) => cleanupDuplicateEventsAction(input.userId),
+    onSuccess: options?.onSuccess,
+    onError: options?.onError,
+  })
+}
+
 export function useCalendar() {
   const createEvent = useCreateEvent()
   const updateEvent = useUpdateEvent()
   const deleteEvent = useDeleteEvent()
   const createCalendar = useCreateCalendar()
+  const createDefaultCalendars = useCreateDefaultCalendars()
+  const cleanupDuplicates = useCleanupDuplicates()
 
   return {
     createEvent: {
@@ -250,6 +264,17 @@ export function useCalendar() {
       isPending: createCalendar.isPending,
       error: createCalendar.error,
       optimisticData: createCalendar.optimisticData,
+    },
+    createDefaultCalendars: {
+      execute: createDefaultCalendars.execute,
+      isPending: createDefaultCalendars.isPending,
+      error: createDefaultCalendars.error,
+      optimisticData: createDefaultCalendars.optimisticData,
+    },
+    cleanupDuplicates: {
+      execute: cleanupDuplicates.execute,
+      isPending: cleanupDuplicates.isPending,
+      error: cleanupDuplicates.error,
     },
   }
 }

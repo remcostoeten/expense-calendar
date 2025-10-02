@@ -41,8 +41,11 @@ export function CalendarCreationModal({
   const [name, setName] = useState("")
   const [color, setColor] = useState("blue")
   const createCalendar = useCreateCalendar({
-    onSuccess: () => {
+    onSuccess: (calendar) => {
       onCalendarCreated?.()
+      // Pass the created calendar's color name for selection
+      const colorName = colorOptions.find(opt => opt.hex === calendar.color)?.value || "blue"
+      onSuccess?.(colorName)
     },
     onError: (error) => {
       console.error("Failed to create calendar:", error)
@@ -63,6 +66,10 @@ export function CalendarCreationModal({
           color: selectedColor?.hex || "#3b82f6",
           isDefault: false,
         })
+        // onSuccess will be called by the hook's onSuccess callback
+        setName("")
+        setColor("blue")
+        onClose()
       } else {
         const newCalendar = {
           name: name.trim(),
@@ -71,12 +78,11 @@ export function CalendarCreationModal({
           isActive: true,
         }
         addCalendar(newCalendar)
+        onSuccess?.(color)
+        setName("")
+        setColor("blue")
+        onClose()
       }
-
-      onSuccess?.(color)
-      setName("")
-      setColor("blue")
-      onClose()
     }
   }
 

@@ -14,7 +14,7 @@ export async function createCalendarAction(data: {
     const calendar = await createCalendar({
       userId: data.userId,
       name: data.name,
-      description: data.description || null,
+      description: data.description && data.description.trim() ? data.description.trim() : null,
       color: data.color || "#3b82f6",
       isDefault: data.isDefault || false,
     })
