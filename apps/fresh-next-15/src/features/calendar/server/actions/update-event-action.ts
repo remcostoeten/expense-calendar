@@ -2,22 +2,21 @@
 
 import { revalidatePath } from "next/cache"
 import { updateEvent } from "../mutations/update-event"
-import type { Event } from "@/server/schema"
 
-export async function updateEventAction(eventId: number, data: {
-  title?: string
-  description?: string
-  startTime?: Date
-  endTime?: Date
-  location?: string
-  allDay?: boolean
-}) {
+export async function updateEventAction(
+  eventId: string,
+  data: {
+    title?: string
+    description?: string
+    startTime?: Date
+    endTime?: Date
+    location?: string
+    isAllDay?: boolean
+  },
+) {
   try {
-    const event: Event = await updateEvent(eventId.toString(), data)
-
-    // Revalidate Next.js cache
+    const event = await updateEvent(eventId, data)
     revalidatePath("/dashboard/calendar")
-
     return { success: true, data: event }
   } catch (error) {
     console.error("Failed to update event:", error)

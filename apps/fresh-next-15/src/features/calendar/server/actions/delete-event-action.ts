@@ -3,14 +3,11 @@
 import { revalidatePath } from "next/cache"
 import { deleteEvent } from "../mutations/delete-event"
 
-export async function deleteEventAction(eventId: number) {
+export async function deleteEventAction(eventId: string) {
   try {
-    await deleteEvent(eventId.toString())
-
-    // Revalidate Next.js cache
+    await deleteEvent(eventId)
     revalidatePath("/dashboard/calendar")
-
-    return { success: true, data: null }
+    return { success: true }
   } catch (error) {
     console.error("Failed to delete event:", error)
     return {

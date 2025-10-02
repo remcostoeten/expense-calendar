@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache"
 import { createCalendar } from "../mutations/create-calendar"
-import type { Calendar } from "@/server/schema"
 
 export async function createCalendarAction(data: {
   userId: number
@@ -12,18 +11,14 @@ export async function createCalendarAction(data: {
   isDefault?: boolean
 }) {
   try {
-    const calendar: Calendar = await createCalendar({
+    const calendar = await createCalendar({
       userId: data.userId,
       name: data.name,
-      description: data.description || null,
+      description: data.description && data.description.trim() ? data.description.trim() : null,
       color: data.color || "#3b82f6",
       isDefault: data.isDefault || false,
-      sortOrder: 0,
     })
-
-    // Revalidate Next.js cache
     revalidatePath("/dashboard/calendar")
-
     return { success: true, data: calendar }
   } catch (error) {
     console.error("Failed to create calendar:", error)

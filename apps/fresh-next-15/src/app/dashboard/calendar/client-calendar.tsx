@@ -1,57 +1,80 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { useUser } from '@stackframe/stack'
-import { redirect } from 'next/navigation'
-import { toast } from 'sonner'
+import CalendarPageWrapper from "@/features/calendar/components/calendar-page-wrapper"
+import { withAuth } from "@/lib/auth/with-auth"
+import { useToast } from "@/components/ui/use-toast"
+import { useStackAuthHelper } from "@/lib/auth/stack-auth-helper"
 
-function ClientCalendar() {
+interface ClientCalendarProps {
+  user: any
+}
+
+function ClientCalendar({ user }: ClientCalendarProps) {
   const searchParams = useSearchParams()
-  const user = useUser()
+  const { toast } = useToast()
+  const { getInternalUserId } = useStackAuthHelper()
+  const [internalUserId, setInternalUserId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!user) {
-      redirect('/handler/sign-in')
-      return
-    }
-
     const success = searchParams.get("success")
     const error = searchParams.get("error")
 
     if (success) {
-      toast.success(success)
+      toast({
+        title: "Success",
+        description: success,
+      })
     }
 
     if (error) {
-      toast.error(error)
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      })
     }
-  }, [searchParams, user])
+  }, [searchParams, toast])
 
-  if (!user) {
+  useEffect(() => {
+    const fetchInternalUserId = async () => {
+      try {
+        const id = await getInternalUserId()
+        setInternalUserId(id?.toString() || null)
+      } catch (error) {
+        console.error('Error fetching internal user ID:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (user) {
+      fetchInternalUserId()
+    }
+  }, [user, getInternalUserId])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    )
+  }
+
+  if (!internalUserId) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-2">Loading...</h1>
-          <p className="text-muted-foreground">Checking authentication...</p>
+          <h3 className="text-lg font-medium text-muted-foreground">Authentication Error</h3>
+          <p className="text-sm text-muted-foreground">Unable to load user data</p>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Calendar</h1>
-      <div className="bg-card p-6 rounded-lg border">
-        <p className="text-muted-foreground">
-          Welcome to your calendar, {user.displayName || user.primaryEmail}!
-        </p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Calendar functionality will be implemented here.
-        </p>
-      </div>
-    </div>
-  )
+  return <CalendarPageWrapper userId={internalUserId} />
 }
 
-export default ClientCalendar
+export default withAuth(ClientCalendar)
