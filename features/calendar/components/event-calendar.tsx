@@ -494,7 +494,6 @@ export function EventCalendar({
           </div>
         </div>
 
-        {/* Month grid */}
         <div className="flex-1 flex flex-col">
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="flex-1 grid grid-cols-7 border-b last:border-b-0">
@@ -521,7 +520,6 @@ export function EventCalendar({
                       >
                         {format(day, "d")}
                       </span>
-                      {/* Current time indicator for today in month view */}
                       {showCurrentTime && isCurrentDay && (
                         <div className="absolute top-1 right-1 flex items-center gap-1 bg-red-500/80 text-white px-1.5 py-0.5 rounded shadow-sm">
                           <div className="w-1 h-1 bg-white/80 rounded-full" />
@@ -570,10 +568,241 @@ export function EventCalendar({
     )
   }
 
+  const renderDayView = () => {
+    const dayEvents = getEventsForDay(currentDate)
+
+    // Calculate current time position for the red line (responsive height)
+    const currentHour = currentTime.getHours()
+    const currentMinute = currentTime.getMinutes()
+    const hourHeight = window.innerWidth >= 640 ? 64 : 48 // 64px on sm+, 48px on mobile
+    const currentTimePosition = (currentHour + currentMinute / 60) * hourHeight
+
+    return (
+      <div className="flex-1 relative">
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b shadow-sm">
+          <div className="grid grid-cols-[60px_1fr] sm:grid-cols-[80px_1fr]">
+            <div className="border-r p-1 sm:p-2 flex items-center justify-center">
+              <div className="bg-primary/10 border border-primary/20 rounded px-1 sm:px-2 py-1 text-xs font-medium text-primary">
+                <span className="hidden sm:inline">Day View</span>
+                <span className="sm:hidden">Day</span>
+              </div>
+            </div>
+            <div className="p-1 sm:p-2 text-center">
+              <div className="text-xs sm:text-sm font-medium text-muted-foreground">
+                {format(currentDate, "EEEE")}
+              </div>
+              <div
+                className={cn(
+                  "text-sm sm:text-lg font-semibold transition-colors duration-200",
+                  isSameDay(currentDate, new Date()) && "text-primary",
+                )}
+              >
+                {format(currentDate, "MMMM d, yyyy")}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-[60px_1fr] sm:grid-cols-[80px_1fr] flex-1 relative">
+          <div className="border-r relative bg-gradient-to-r from-background to-muted/20">
+            {Array.from({ length: 24 }, (_, hour) => (
+              <div
+                key={hour}
+                className="border-b border-border/30 h-12 sm:h-16 flex items-center justify-center text-xs text-muted-foreground"
+              >
+                <span className="hidden sm:inline">{hour.toString().padStart(2, "0")}:00</span>
+                <span className="sm:hidden">{hour.toString().padStart(2, "0")}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="relative">
+            {/* Current time line */}
+            {showCurrentTime && isSameDay(currentDate, new Date()) && (
+              <div
+                className="absolute left-0 right-0 z-20 pointer-events-none"
+                style={{ top: `${currentTimePosition}px` }}
+              >
+                <div className="flex items-center relative">
+                  <div className="absolute -left-16 top-1/2 -translate-y-1/2 bg-red-500/90 text-white text-xs px-1.5 py-0.5 rounded font-medium shadow-sm whitespace-nowrap z-20">
+                    {format(currentTime, "HH:mm")}
+                  </div>
+                  <div className="w-full relative">
+                    <div className="h-px bg-red-500/80 shadow-sm" />
+                    <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-red-500 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {Array.from({ length: 24 }, (_, hour) => (
+              <div
+                key={hour}
+                className="border-b border-border/20 hover:bg-accent/30 transition-colors duration-150 h-12 sm:h-16 cursor-pointer"
+                onMouseDown={(e) => handleTimeSlotMouseDown(currentDate, hour, e)}
+                onMouseMove={(e) => handleTimeSlotMouseMove(currentDate, hour, e)}
+                onMouseUp={handleTimeSlotMouseUp}
+              />
+            ))}
+
+            {isSelecting && selectionStart && selectionEnd && isSameDay(currentDate, selectionDay!) && (
+              <div
+                className="absolute left-2 right-2 bg-primary/20 border-2 border-primary rounded pointer-events-none z-10"
+                style={{
+                  top: `${Math.min(selectionStart.time, selectionEnd.time) * (window.innerWidth >= 640 ? 64 : 48)}px`,
+                  height: `${Math.abs(selectionEnd.time - selectionStart.time) * (window.innerWidth >= 640 ? 64 : 48)}px`,
+                }}
+              >
+                <div className="flex items-center justify-center h-full text-xs font-medium text-primary">
+                  New Event
+                </div>
+              </div>
+            )}
+
+            <div className="absolute inset-2 top-2 pointer-events-none">
+              {dayEvents.map((event) => {
+                const startHour = event.start.getHours()
+                const startMinute = event.start.getMinutes()
+                const duration = (event.end.getTime() - event.start.getTime()) / (1000 * 60 * 60)
+                const hourHeight = window.innerWidth >= 640 ? 64 : 48
+                const top = (startHour + startMinute / 60) * hourHeight
+                const height = Math.max(duration * hourHeight, 24)
+
+                return (
+                  <Card
+                    key={event.id}
+                    data-event-id={event.id}
+                    className={cn(
+                      "absolute left-0 right-0 text-xs border transition-all duration-200 hover:shadow-md cursor-pointer pointer-events-auto p-2",
+                      getColorClasses(event.color),
+                    )}
+                    style={{ top: `${top}px`, height: `${height}px` }}
+                    onClick={(e) => handleEventClick(event, e)}
+                  >
+                    <CardContent className="p-0">
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium truncate flex-1">{event.title}</div>
+                        {event.isRecurring && <RiRepeatLine className="h-3 w-3 opacity-75 ml-1 flex-shrink-0" />}
+                      </div>
+                      <div className="text-xs opacity-75">
+                        {format(event.start, "HH:mm")} - {format(event.end, "HH:mm")}
+                      </div>
+                      {event.location && <div className="text-xs opacity-75 truncate">{event.location}</div>}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderYearView = () => {
+    const year = currentDate.getFullYear()
+    const months = Array.from({ length: 12 }, (_, i) => new Date(year, i, 1))
+
+    return (
+      <div className="flex-1 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {months.map((monthDate) => {
+            const monthStart = startOfMonth(monthDate)
+            const monthEnd = endOfMonth(monthDate)
+            const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 })
+            const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 })
+            const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd })
+
+            const weeks = []
+            for (let i = 0; i < calendarDays.length; i += 7) {
+              weeks.push(calendarDays.slice(i, i + 7))
+            }
+
+            return (
+              <div key={monthDate.getMonth()} className="border rounded-lg p-3 bg-card hover:shadow-md transition-shadow">
+                <div className="text-center mb-2">
+                  <h3 className="font-semibold text-sm">{format(monthDate, "MMMM")}</h3>
+                </div>
+
+                {/* Mini month header */}
+                <div className="grid grid-cols-7 gap-1 mb-1">
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
+                    <div key={idx} className="text-xs text-muted-foreground text-center font-medium">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Mini month grid */}
+                <div className="space-y-1">
+                  {weeks.map((week, weekIndex) => (
+                    <div key={weekIndex} className="grid grid-cols-7 gap-1">
+                      {week.map((day) => {
+                        const dayEvents = getEventsForDay(day)
+                        const isCurrentMonth = day.getMonth() === monthDate.getMonth()
+                        const isCurrentDay = isToday(day)
+                        const isSelected = isSameDay(day, currentDate)
+
+                        return (
+                          <button
+                            key={day.toISOString()}
+                            type="button"
+                            onClick={() => {
+                              setCurrentDate(day)
+                              setView("day")
+                            }}
+                            className={cn(
+                              "relative text-xs p-1 rounded hover:bg-accent transition-colors min-h-[24px] flex items-center justify-center",
+                              !isCurrentMonth && "text-muted-foreground/50",
+                              isCurrentDay && "bg-primary text-primary-foreground font-semibold",
+                              isSelected && !isCurrentDay && "bg-accent ring-2 ring-primary/50",
+                              dayEvents.length > 0 && "font-medium"
+                            )}
+                          >
+                            <span>{format(day, "d")}</span>
+                            {dayEvents.length > 0 && (
+                              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-0.5">
+                                {dayEvents.slice(0, 2).map((event, idx) => (
+                                  <span
+                                    key={idx}
+                                    className={cn(
+                                      "w-1 h-1 rounded-full",
+                                      event.color === "emerald" && "bg-emerald-500",
+                                      event.color === "orange" && "bg-orange-500",
+                                      event.color === "violet" && "bg-violet-500",
+                                      event.color === "blue" && "bg-blue-500",
+                                      event.color === "rose" && "bg-rose-500",
+                                      !["emerald", "orange", "violet", "blue", "rose"].includes(event.color) && "bg-gray-500"
+                                    )}
+                                  />
+                                ))}
+                                {dayEvents.length > 2 && (
+                                  <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+                                )}
+                              </div>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   const renderCurrentView = () => {
     switch (view) {
+      case "day":
+        return renderDayView()
       case "month":
         return renderMonthView()
+      case "year":
+        return renderYearView()
       case "week":
       default:
         return renderWeekView()
@@ -614,7 +843,7 @@ export function EventCalendar({
                 >
                   Today
                 </Button>
-                {view === "week" && (
+                {(view === "week" || view === "day") && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -630,7 +859,7 @@ export function EventCalendar({
 
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center border rounded-md p-1" role="tablist" aria-label="Calendar views">
-                {([view === "week" ? "week" : "day", "month"] as CalendarView[]).map((viewOption) => (
+                {(["day", "week", "month", "year"] as CalendarView[]).map((viewOption) => (
                   <Button
                     key={viewOption}
                     variant={view === viewOption ? "default" : "ghost"}

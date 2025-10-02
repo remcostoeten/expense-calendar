@@ -8,7 +8,7 @@ interface CalendarShellProps {
   children: ReactNode
   isLoading: boolean
   hasData: boolean
-  view?: "week" | "month"
+  view?: "day" | "week" | "month" | "year"
   className?: string
 }
 

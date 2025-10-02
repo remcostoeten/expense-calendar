@@ -6,11 +6,125 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Plus, Clock } from "lucide-react"
 
 type TProps = {
-    initialView?: "week" | "month"
+    initialView?: "day" | "week" | "month" | "year"
 }
 
 export function CalendarSkeleton({ initialView = "week" }: TProps) {
-  const [view, setView] = useState<"week" | "month">(initialView)
+  const [view, setView] = useState<"day" | "week" | "month" | "year">(initialView)
+  const renderDayView = () => {
+    return (
+      <div className="flex-1 relative">
+        {/* Header */}
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b shadow-sm">
+          <div className="grid grid-cols-[60px_1fr] sm:grid-cols-[80px_1fr]">
+            <div className="border-r p-1 sm:p-2 flex items-center justify-center">
+              <Skeleton className="h-6 w-12 sm:w-16" />
+            </div>
+            <div className="p-1 sm:p-2 text-center">
+              <Skeleton className="h-4 w-16 mx-auto mb-1" />
+              <Skeleton className="h-6 w-32 mx-auto" />
+            </div>
+          </div>
+        </div>
+
+        {/* Time grid */}
+        <div className="grid grid-cols-[60px_1fr] sm:grid-cols-[80px_1fr] flex-1 relative">
+          {/* Time labels */}
+          <div className="border-r relative bg-gradient-to-r from-background to-muted/20">
+            {Array.from({ length: 24 }, (_, hour) => (
+              <div
+                key={hour}
+                className="border-b border-border/30 h-12 sm:h-16 flex items-center justify-center"
+              >
+                <Skeleton className="h-3 w-8 sm:w-12" />
+              </div>
+            ))}
+          </div>
+
+          {/* Day column */}
+          <div className="relative">
+            {Array.from({ length: 24 }, (_, hour) => (
+              <div
+                key={hour}
+                className="border-b border-border/20 h-12 sm:h-16"
+              />
+            ))}
+            
+            {/* Sample event skeletons */}
+            <div className="absolute inset-2 top-2 pointer-events-none">
+              <div 
+                className="absolute left-0 right-0 bg-blue-100 border border-blue-200 rounded p-2 shadow-sm"
+                style={{ top: `${9 * 64}px`, height: '64px' }}
+              >
+                <Skeleton className="h-3 w-3/4 mb-1" />
+                <Skeleton className="h-2 w-1/2" />
+              </div>
+              <div 
+                className="absolute left-0 right-0 bg-emerald-100 border border-emerald-200 rounded p-2 shadow-sm"
+                style={{ top: `${14 * 64}px`, height: '96px' }}
+              >
+                <Skeleton className="h-3 w-2/3 mb-1" />
+                <Skeleton className="h-2 w-1/3 mb-1" />
+                <Skeleton className="h-2 w-1/2" />
+              </div>
+              <div 
+                className="absolute left-0 right-0 bg-violet-100 border border-violet-200 rounded p-2 shadow-sm"
+                style={{ top: `${11 * 64}px`, height: '48px' }}
+              >
+                <Skeleton className="h-3 w-1/2 mb-1" />
+                <Skeleton className="h-2 w-1/4" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderYearSkeleton = () => {
+    const months = Array.from({ length: 12 }, (_, i) => i)
+
+    return (
+      <div className="flex-1 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {months.map((month) => (
+            <div key={month} className="border rounded-lg p-3 bg-card">
+              <div className="text-center mb-2">
+                <Skeleton className="h-4 w-16 mx-auto" />
+              </div>
+              
+              {/* Mini month header */}
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {Array.from({ length: 7 }).map((_, idx) => (
+                  <Skeleton key={idx} className="h-3 w-3 mx-auto" />
+                ))}
+              </div>
+
+              {/* Mini month grid */}
+              <div className="space-y-1">
+                {Array.from({ length: 6 }).map((_, weekIndex) => (
+                  <div key={weekIndex} className="grid grid-cols-7 gap-1">
+                    {Array.from({ length: 7 }).map((_, dayIndex) => (
+                      <div key={dayIndex} className="relative">
+                        <Skeleton className="h-6 w-6 rounded" />
+                        {(weekIndex + dayIndex) % 4 === 0 && (
+                          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-0.5">
+                            <Skeleton className="w-1 h-1 rounded-full" />
+                            <Skeleton className="w-1 h-1 rounded-full" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   const renderWeekSkeleton = () => {
     const weekDays = Array.from({ length: 7 }, (_, i) => i)
     
@@ -187,7 +301,7 @@ export function CalendarSkeleton({ initialView = "week" }: TProps) {
               >
                 Today
               </Button>
-              {view === "week" && (
+              {(view === "week" || view === "day") && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -203,6 +317,14 @@ export function CalendarSkeleton({ initialView = "week" }: TProps) {
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center border rounded-md p-1">
               <Button
+                variant={view === "day" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setView("day")}
+                className="text-xs px-2 h-8"
+              >
+                Day
+              </Button>
+              <Button
                 variant={view === "week" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setView("week")}
@@ -217,6 +339,14 @@ export function CalendarSkeleton({ initialView = "week" }: TProps) {
                 className="text-xs px-2 h-8"
               >
                 Month
+              </Button>
+              <Button
+                variant={view === "year" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setView("year")}
+                className="text-xs px-2 h-8"
+              >
+                Year
               </Button>
             </div>
 
@@ -235,7 +365,10 @@ export function CalendarSkeleton({ initialView = "week" }: TProps) {
 
       {/* Calendar content skeleton */}
       <div className="flex-1 min-h-0 overflow-auto">
-        {view === "month" ? renderMonthSkeleton() : renderWeekSkeleton()}
+        {view === "day" ? renderDayView() : 
+         view === "month" ? renderMonthSkeleton() : 
+         view === "year" ? renderYearSkeleton() : 
+         renderWeekSkeleton()}
       </div>
     </div>
   )
