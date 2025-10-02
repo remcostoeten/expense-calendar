@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createEvent } from "../mutations/create-event"
+import type { Event } from "@/server/schema"
 
 export async function createEventAction(data: {
   calendarId: number
@@ -14,7 +15,7 @@ export async function createEventAction(data: {
   allDay?: boolean
 }) {
   try {
-    const event = await createEvent({
+    const event: Event = await createEvent({
       calendarId: data.calendarId,
       userId: data.userId,
       title: data.title,
@@ -24,7 +25,13 @@ export async function createEventAction(data: {
       location: data.location || null,
       allDay: data.allDay || false,
     })
+
     revalidatePath("/dashboard/calendar")
+
+    // 3️⃣ Sync to external providers (Outlook/Google/Apple)
+    // ⚡️ You can extend this list later with any provider
+    await syncOutToProvider(data.userId, event, "create")
+
     return { success: true, data: event }
   } catch (error) {
     console.error("Failed to create event:", error)

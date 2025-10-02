@@ -2,7 +2,7 @@ import { db } from "@/server/db"
 import { events } from "@/server/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
 
-export async function getEvents(calendarId: string) {
+export async function getEvents(calendarId: number) {
   const calendarEvents = await db
     .select()
     .from(events)
@@ -12,7 +12,7 @@ export async function getEvents(calendarId: string) {
   return calendarEvents
 }
 
-export async function getEventsByDateRange(calendarId: string, startDate: Date, endDate: Date) {
+export async function getEventsByDateRange(calendarId: number, startDate: Date, endDate: Date) {
   const calendarEvents = await db
     .select()
     .from(events)

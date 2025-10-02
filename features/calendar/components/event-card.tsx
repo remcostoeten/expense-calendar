@@ -3,7 +3,7 @@ import { RiRepeatLine } from "@remixicon/react"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { getColorClasses } from "../utils/calendar-utils"
-import type { TCalendarEvent } from "../event-calendar"
+import type { TCalendarEvent } from "./event-calendar"
 
 type TProps = {
   event: TCalendarEvent

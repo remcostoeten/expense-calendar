@@ -3,6 +3,9 @@
 import type React from "react"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+
+import type { User } from "@/lib/types/auth"
+
 import { useAuth } from "./auth-context"
 
 interface WithAuthOptions {
@@ -12,7 +15,10 @@ interface WithAuthOptions {
 }
 
 // Higher-Order Component for authentication
-export function withAuth<P extends object>(WrappedComponent: React.ComponentType<P>, options: WithAuthOptions = {}) {
+export function withAuth<P extends object>(
+  WrappedComponent: React.ComponentType<P & { user: User }>,
+  options: WithAuthOptions = {},
+) {
   const { redirectTo = "/auth/signin", requireAuth = true, loadingComponent: LoadingComponent } = options
 
   const AuthenticatedComponent = (props: P) => {
@@ -23,7 +29,7 @@ export function withAuth<P extends object>(WrappedComponent: React.ComponentType
       if (!isLoading && requireAuth && !isAuthenticated) {
         router.push(redirectTo)
       }
-    }, [isLoading, isAuthenticated, router])
+    }, [isLoading, isAuthenticated, router, redirectTo])
 
     // Show loading state
     if (isLoading) {
@@ -32,7 +38,7 @@ export function withAuth<P extends object>(WrappedComponent: React.ComponentType
       }
       return (
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       )
     }

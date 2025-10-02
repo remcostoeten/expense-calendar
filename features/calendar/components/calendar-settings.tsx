@@ -120,9 +120,7 @@ export function CalendarSettings() {
                   onCheckedChange={async (checked) => {
                     setShowCurrentTime(checked)
                     if (user?.id) {
-                      await userSettingsHook.updateUserSettings.execute(user.id, {
-                        showCurrentTime: checked
-                      })
+                      await userSettingsHook.updateUserSettings.execute({ userId: user.id, settings: { showCurrentTime: checked } })
                     }
                   }} 
                 />

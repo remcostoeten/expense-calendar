@@ -81,7 +81,7 @@ export default function CalendarPageWrapper({ userId }: CalendarPageWrapperProps
   return (
     <CalendarDataProvider events={events} calendars={calendars} userId={userIdNum}>
       <DualSidebarLayout>
-        <div className="flex flex-1 flex-col py-3 sm:py-4 md:py-6 lg:py-8">
+        <div className="flex flex-1 flex-col">
           <BigCalendar userId={userId} />
         </div>
       </DualSidebarLayout>

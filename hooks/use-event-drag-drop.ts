@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, type RefObject } from "react"
 import { startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns"
-import type { TCalendarEvent } from "../event-calendar"
+import type { TCalendarEvent } from "../features/calendar/components/event-calendar"
 
 type TProps = {
   view: "day" | "week" | "month" | "year"

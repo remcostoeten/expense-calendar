@@ -16,7 +16,7 @@ import { CalendarSettings } from "@/features/calendar/components/calendar-settin
 import { CalendarCreationModal } from "@/features/calendar/components/calendar-creation-modal"
 import SidebarCalendar from "@/features/calendar/components/sidebar-calendar"
 import { useRightSidebarStore } from "@/stores/right-sidebar-store"
-import { useCalendarStore } from "@/stores/calendar-store"
+import { type CalendarEvent, useCalendarStore } from "@/stores/calendar-store"
 import { format, isToday, isTomorrow } from "date-fns"
 
 import {
@@ -52,7 +52,7 @@ function MobileSidebarContent() {
   const upcomingEvents = getUpcomingEvents(5)
   const previousEvents = getPreviousEvents(10)
 
-  const formatEventTime = (event: any) => {
+  const formatEventTime = (event: CalendarEvent) => {
     if (event.allDay) return "All day"
     if (isToday(event.start)) return format(event.start, "h:mm a")
     if (isTomorrow(event.start)) return `Tomorrow, ${format(event.start, "h:mm a")}`
@@ -234,6 +234,9 @@ export function RightSidebarTrigger({ className, ...props }: React.ComponentProp
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { state } = useRightSidebarStore()
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
+  const [showPreviousEvents, setShowPreviousEvents] = useState(false)
   const {
     calendars,
     toggleColorVisibility,
@@ -242,14 +245,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     showRecurringEvents,
     toggleRecurringEvents,
   } = useCalendarStore()
-  const { state } = useRightSidebarStore()
-  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
-  const [showPreviousEvents, setShowPreviousEvents] = useState(false)
 
   const upcomingEvents = getUpcomingEvents(5)
   const previousEvents = getPreviousEvents(10)
-
-  const formatEventTime = (event: any) => {
+const formatEventTime = (event: CalendarEvent) => {
     if (event.allDay) return "All day"
     if (isToday(event.start)) return format(event.start, "h:mm a")
     if (isTomorrow(event.start)) return `Tomorrow, ${format(event.start, "h:mm a")}`
@@ -413,6 +412,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarFooter>
         </div>
       </div>
+      <CalendarCreationModal isOpen={isCalendarModalOpen} onClose={() => setIsCalendarModalOpen(false)} />
     </div>
   )
 }

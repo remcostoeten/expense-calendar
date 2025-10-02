@@ -34,16 +34,15 @@ export function validateObject<T extends object>(
   const errors: TValidationErrors = []
   const result = {} as T
 
-  for (const [key, validator] of Object.entries(validators)) {
-    const value = (input as Record<string, unknown>)[key]
-    const validation = validator(value)
+  for (const key of Object.keys(validators) as Array<keyof T>) {
+    const validator = validators[key];
+    const value = (input as Record<string, unknown>)[key as string];
+    const validation = validator(value);
 
     if (!validation.ok) {
-      errors.push({ field: key, message: validation.error })
+      errors.push({ field: key as string, message: validation.error });
     } else {
-      // TypeScript doesn't know that this cast is safe because it can't track
-      // that validator returns the correct type, but we enforce this in implementation
-      result[key as keyof T] = validation.value as T[keyof T]
+      result[key] = validation.value as T[keyof T];
     }
   }
 

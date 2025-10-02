@@ -151,7 +151,7 @@ export function useUpdateEvent(options?: {
   onError?: (error: string) => void
 }) {
   return useApi<UpdateEventInput, Event, Event[]>({
-    action: (input) => updateEventAction(input.eventId, input.data),
+    action: (input) => updateEventAction(Number(input.eventId), input.data),
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentEvents, input) => {
@@ -169,7 +169,7 @@ export function useDeleteEvent(options?: {
   onError?: (error: string) => void
 }) {
   return useApi<DeleteEventInput, void, Event[]>({
-    action: (input) => deleteEventAction(input.eventId),
+    action: (input) => deleteEventAction(Number(input.eventId)),
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentEvents, input) => {

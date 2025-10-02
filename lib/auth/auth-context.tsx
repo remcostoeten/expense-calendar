@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import type { AuthState, User } from "@/lib/types/auth"
 import { MockAuthService } from "./mock-auth"
 
@@ -19,10 +20,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
     isAuthenticated: false,
   })
+  const [mounted, setMounted] = useState(false)
 
+  const router = useRouter()
   const authService = MockAuthService.getInstance()
 
-  const refreshUser = async () => {
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const refreshUser = useCallback(async () => {
+    if (!mounted) return
+    
     setAuthState((prev) => ({ ...prev, isLoading: true }))
     try {
       const user = await authService.getCurrentUser()
@@ -39,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: false,
       })
     }
-  }
+  }, [mounted, authService])
 
   const signIn = async (email: string, password: string): Promise<User> => {
     setAuthState((prev) => ({ ...prev, isLoading: true }))
@@ -73,8 +83,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    refreshUser()
-  }, [])
+    if (mounted) {
+      refreshUser()
+    }
+  }, [mounted, refreshUser])
 
   const value: AuthContextType = {
     ...authState,

@@ -1,33 +1,20 @@
+import { Metadata } from "next"
 import type React from "react"
-import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
-import { Analytics } from "@vercel/analytics/next"
-import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from "@/lib/auth/auth-context"
-import { Suspense } from "react"
 import "./globals.css"
-
-
 
 export const metadata: Metadata = {
   title: "Calendar || Commute tracker",
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-<body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthProvider>
-            <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-          </AuthProvider>
-        </ThemeProvider>
-        <Analytics />
+      <body
+        className={`min-h-screen font-sans antialiased ${GeistSans.variable} ${GeistMono.variable}`}
+      >
+        {children}
       </body>
     </html>
   )

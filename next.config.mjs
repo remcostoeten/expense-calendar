@@ -11,6 +11,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    forceSwcTransforms: true,
+  },
+  // Disable static optimization completely
+  generateStaticParams: false,
+  trailingSlash: false,
 }
 
 const withBundleAnalyzer = bundleAnalyzer({

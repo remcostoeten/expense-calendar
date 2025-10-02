@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   bigserial,
@@ -7,22 +8,11 @@ import {
   varchar,
   timestamp,
   char,
-  sql,
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
 import { timestamps } from "./schema-helpers";
-import { timestamps } from "./schema-helpers";
-import { timestamps } from "./schema-helpers";
-import { timestamps } from "./schema-helpers";
-import { timestamps } from "./schema-helpers";
-import { timestamps } from "./schema-helpers";
-import { timestamps } from "./schema-helpers";
-import { timestamps } from "./schema-helpers";
-import { timestamps } from "./schema-helpers";
-
-// Import shared schema helpers
-export { timestamps, type TTimestamps, type TBaseEntity } from "./schema-helpers"
+export { type TTimestamps, type TBaseEntity } from "./schema-helpers"
 
 export const users = pgTable(
   "users",

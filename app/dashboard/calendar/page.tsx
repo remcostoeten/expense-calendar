@@ -1,15 +1,13 @@
-"use client"
+import ClientCalendar from "./client-calendar"
 
-import CalendarPageWrapper from "@/features/calendar/components/calendar-page-wrapper"
-import { withAuth } from "@/lib/auth/with-auth"
-import type { User } from "@/lib/types/auth"
+export const dynamic = "force-dynamic"
 
-interface CalendarPageProps {
-  user: User
+export default function CalendarPage() {
+  return (
+    <div className="flex min-h-screen">
+      <div className="flex-1">
+          <ClientCalendar />
+      </div>
+    </div>
+  )
 }
-
-function CalendarPage({ user }: CalendarPageProps) {
-  return <CalendarPageWrapper userId={user.id.toString()} />
-}
-
-export default withAuth(CalendarPage)
