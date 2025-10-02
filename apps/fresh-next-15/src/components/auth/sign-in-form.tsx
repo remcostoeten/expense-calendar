@@ -1,70 +1,45 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth/auth-context"
+import { useUser } from '@stackframe/stack'
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function SignInForm() {
-  const [email, setEmail] = useState("john.doe@example.com")
-  const [password, setPassword] = useState("password")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const { signIn, isAuthenticated } = useAuth()
+  const user = useUser()
   const router = useRouter()
 
   // Redirect if already authenticated
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (user) {
       router.push("/dashboard/calendar")
     }
-  }, [isAuthenticated, router])
+  }, [user, router])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+  const handleRedirectToSignIn = () => {
+    router.push("/handler/sign-in")
+  }
 
-    try {
-      await signIn(email, password)
-      router.push("/dashboard/calendar")
-    } catch (error) {
-      console.error("Sign in failed:", error)
-    } finally {
-      setIsSubmitting(false)
-    }
+  if (user) {
+    return null // Will redirect via useEffect
   }
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>Sign In</CardTitle>
-        <CardDescription>Mock authentication - any email/password will work</CardDescription>
+        <CardDescription>Use Stack Auth to sign in to your account</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in..." : "Sign In"}
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Click the button below to sign in using Stack Auth with OAuth2 and email authentication.
+          </p>
+          <Button onClick={handleRedirectToSignIn} className="w-full">
+            Sign In with Stack Auth
           </Button>
-        </form>
+        </div>
       </CardContent>
     </Card>
   )

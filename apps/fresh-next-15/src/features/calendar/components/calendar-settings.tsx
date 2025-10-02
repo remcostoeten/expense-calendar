@@ -29,13 +29,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCalendarStore } from "@/stores/calendar-store"
 import { COLOR_OPTIONS } from "@/lib/colors"
 import { useUserSettings } from "@/server/api-hooks/use-user-settings"
-import { useAuth } from "@/lib/auth/auth-context"
+import { useUser } from '@stackframe/stack'
 
 
 export function CalendarSettings() {
   const { calendars, updateCalendar, deleteCalendar, addCalendar, showCurrentTime, setShowCurrentTime } =
     useCalendarStore()
-  const { user } = useAuth()
+  const user = useUser()
   const userSettingsHook = useUserSettings()
 
   const [isOpen, setIsOpen] = useState(false)

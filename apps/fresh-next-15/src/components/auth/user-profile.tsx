@@ -1,5 +1,5 @@
 "use client"
-import { useAuth } from "@/lib/auth/auth-context"
+import { useUser, useSignOut } from '@stackframe/stack'
 import { useRouter } from "next/navigation"
 import {
   DropdownMenu,
@@ -19,19 +19,20 @@ interface UserProfileProps {
 }
 
 export function UserProfile({ showName = true, size = "md" }: UserProfileProps) {
-  const { user, signOut, isLoading } = useAuth()
+  const user = useUser()
+  const signOut = useSignOut()
   const router = useRouter()
 
   const handleSignOut = async () => {
     try {
       await signOut()
-      router.push("/auth/signin")
+      router.push("/handler/sign-in")
     } catch (error) {
       console.error("Sign out failed:", error)
     }
   }
 
-  if (isLoading || !user) {
+  if (!user) {
     return (
       <div className="flex items-center gap-2">
         <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
@@ -41,7 +42,8 @@ export function UserProfile({ showName = true, size = "md" }: UserProfileProps) 
   }
 
   const avatarSize = size === "sm" ? "h-6 w-6" : size === "lg" ? "h-10 w-10" : "h-8 w-8"
-  const initials = user.name
+  const displayName = user.displayName || user.primaryEmail || 'User'
+  const initials = displayName
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -52,13 +54,13 @@ export function UserProfile({ showName = true, size = "md" }: UserProfileProps) 
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">
           <Avatar className={avatarSize}>
-            <AvatarImage src="/placeholder.svg" alt={user.name} />
+            <AvatarImage src={user.profileImageUrl || "/placeholder.svg"} alt={displayName} />
             <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
           </Avatar>
           {showName && (
             <div className="flex flex-col items-start text-left">
-              <span className="text-sm font-medium truncate max-w-32">{user.name}</span>
-              <span className="text-xs text-muted-foreground truncate max-w-32">{user.email}</span>
+              <span className="text-sm font-medium truncate max-w-32">{displayName}</span>
+              <span className="text-xs text-muted-foreground truncate max-w-32">{user.primaryEmail}</span>
             </div>
           )}
         </Button>
@@ -66,8 +68,8 @@ export function UserProfile({ showName = true, size = "md" }: UserProfileProps) 
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
+            <p className="text-sm font-medium">{displayName}</p>
+            <p className="text-xs text-muted-foreground">{user.primaryEmail}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

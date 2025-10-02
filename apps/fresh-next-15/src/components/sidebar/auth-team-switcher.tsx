@@ -1,5 +1,5 @@
 "use client"
-import { useAuth } from "@/lib/auth/auth-context"
+import { useUser, useSignOut } from '@stackframe/stack'
 import { ChevronsUpDown, LogOut, Settings, User } from "lucide-react"
 import {
   DropdownMenu,
@@ -15,20 +15,21 @@ import { useRouter } from "next/navigation"
 
 export function AuthTeamSwitcher() {
   const { isMobile } = useSidebar()
-  const { user, signOut, isLoading } = useAuth()
+  const user = useUser()
+  const signOut = useSignOut()
   const router = useRouter()
 
 
   async function handleSignOut() {
     try {
       await signOut()
-      router.push("/auth/signin")
+      router.push("/handler/sign-in")
     } catch (error) {
       console.error("Sign out failed:", error)
     }
   }
 
-  if (isLoading || !user) {
+  if (!user) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
@@ -44,7 +45,8 @@ export function AuthTeamSwitcher() {
     )
   }
 
-  const initials = user.name
+  const displayName = user.displayName || user.primaryEmail || 'User'
+  const initials = displayName
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -60,14 +62,14 @@ export function AuthTeamSwitcher() {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg" alt={user.name} />
+                <AvatarImage src={user.profileImageUrl || "/placeholder.svg"} alt={displayName} />
                 <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-medium">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                <span className="truncate font-semibold">{displayName}</span>
+                <span className="truncate text-xs text-muted-foreground">{user.primaryEmail}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
