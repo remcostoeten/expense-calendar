@@ -1,0 +1,5 @@
+import SignInPage from "./signin-page"
+
+export default function SignIn() {
+  return <SignInPage />
+}
