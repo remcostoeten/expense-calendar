@@ -1,6 +1,7 @@
 'use client'
+
 import { useAuth } from "@/lib/auth/auth-context"
-import { useRouter } from "next/router"
+import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 export default function HomePage() {

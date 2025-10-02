@@ -1,7 +1,7 @@
 import { format } from "date-fns"
 import { RiRepeatLine } from "@remixicon/react"
 import { cn } from "@/lib/utils"
-import { getColorClasses } from "../utils/calendar-utils"
+import { getColorClasses } from "@/lib/colors"
 import type { TCalendarEvent } from "./event-calendar"
 
 type TProps = {

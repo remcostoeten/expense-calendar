@@ -23,7 +23,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useCalendarStore } from "@/stores/calendar-store"
-import { getColorClass } from "@/lib/colors"
 import type { TCalendarEvent } from "./event-calendar"
 
 interface EventEditModalProps {
@@ -313,7 +312,19 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
                   <SelectItem key={calendar.id} value={calendar.id.toString()}>
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-3 h-3 rounded-full ${getColorClass(calendar.color)}`}
+                        className={`w-3 h-3 rounded-full ${
+                          calendar.color === "emerald"
+                            ? "bg-emerald-500"
+                            : calendar.color === "orange"
+                              ? "bg-orange-500"
+                              : calendar.color === "violet"
+                                ? "bg-violet-500"
+                                : calendar.color === "blue"
+                                  ? "bg-blue-500"
+                                  : calendar.color === "rose"
+                                    ? "bg-rose-500"
+                                    : "bg-gray-500"
+                        }`}
                       />
                       {calendar.name}
                     </div>

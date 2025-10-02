@@ -2,7 +2,8 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInte
 import { RiRepeatLine } from "@remixicon/react"
 import { cn } from "@/lib/utils"
 import type { TCalendarEvent } from "../event-calendar"
-import { getEventsForDay, getColorClasses } from "../../utils/calendar-utils"
+import { getEventsForDay } from "../../utils/calendar-utils"
+import { getColorClasses } from "@/lib/colors"
 
 type TProps = {
     currentDate: Date

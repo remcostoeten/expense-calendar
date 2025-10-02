@@ -42,6 +42,7 @@ import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers: {
   onReorder: (calendarId: string, direction: 'up' | 'down') => void
@@ -153,8 +154,21 @@ function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers: {
                 </div>
               ))}
               {(showPreviousEvents ? previousEvents : upcomingEvents).length === 0 && (
-                <div className="px-2 py-4 text-sm text-muted-foreground text-center">
-                  No {showPreviousEvents ? "previous" : "upcoming"} events
+                <div className="px-3 py-6 text-sm text-muted-foreground text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center">
+                      <RiCalendarEventLine className="h-6 w-6 text-muted-foreground/60" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium">No {showPreviousEvents ? "previous" : "upcoming"} events</p>
+                      <p className="text-xs text-muted-foreground/70">
+                        {showPreviousEvents
+                          ? "Your past events will appear here"
+                          : "Your future events will appear here when you create them"
+                        }
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -222,77 +236,119 @@ function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers: {
                 </button>
               </CalendarContextMenu>
             ))}
+            {calendars.length === 0 && (
+              <div className="px-3 py-6 text-sm text-muted-foreground text-center">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center">
+                    <RiCalendarEventLine className="h-6 w-6 text-muted-foreground/60" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-medium">No calendars yet</p>
+                    <p className="text-xs text-muted-foreground/70">
+                      Create your first calendar to start organizing your events
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* External Providers Section */}
-          <div className="pt-4 border-t border-border/30">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                External Calendars
-              </h3>
-              <ProviderConnectionModal
-                userId={userId || 0}
-                externalProviders={externalProviders}
-                trigger={
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                    <RiAddLine className="h-3 w-3" />
-                  </Button>
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              {externalProviders.map((provider) => (
-                <button
-                  key={provider.id}
-                  type="button"
-                  onClick={() => toggleExternalProviderVisibility(provider.provider)}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
-                    provider.isConnected
-                      ? "hover:bg-accent/50"
-                      : "opacity-50 cursor-not-allowed"
-                  }`}
-                  disabled={!provider.isConnected}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors"
                 >
                   <span className="flex items-center gap-3">
-                    <span className={`grid place-content-center size-4 shrink-0 rounded-[4px] border border-input ${
-                      provider.isConnected && provider.isVisible
-                        ? 'bg-primary border-primary text-primary-foreground'
-                        : ''
-                    }`}>
-                      <RiCheckLine
-                        className={`${provider.isConnected && provider.isVisible ? "visible" : "invisible"}`}
-                        size={12}
-                        aria-hidden="true"
-                      />
-                    </span>
-                    <span
-                      className={`${!provider.isConnected || !provider.isVisible ? "line-through text-muted-foreground/65" : ""} text-sm font-medium`}
-                    >
-                      {provider.name}
-                    </span>
-                    {!provider.isConnected && (
-                      <span className="text-xs text-muted-foreground/60">(Not connected)</span>
-                    )}
+                    <RiAddLine className="h-4 w-4" />
+                    <span className="text-sm font-medium">Add External Calendar</span>
                   </span>
-                  <span
-                    className={`size-3 rounded-full border-2 border-white shadow-sm ${
-                      provider.color === "emerald"
-                        ? "bg-emerald-500"
-                        : provider.color === "orange"
-                          ? "bg-orange-500"
-                          : provider.color === "violet"
-                            ? "bg-violet-500"
-                            : provider.color === "blue"
-                              ? "bg-blue-500"
-                              : provider.color === "rose"
-                                ? "bg-rose-500"
-                                : "bg-gray-500"
-                    }`}
+                  <RiAddLine className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="start" side="right">
+                <div className="p-4 border-b border-border/50">
+                  <h3 className="font-semibold text-sm">Connect External Calendars</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Connect your external calendar accounts to sync events
+                  </p>
+                </div>
+                <div className="p-4 space-y-3">
+                  {externalProviders.map((provider) => (
+                    <div
+                      key={provider.id}
+                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                        provider.isConnected
+                          ? "bg-accent/30 border-border/50"
+                          : "bg-muted/30 border-border/30"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`grid place-content-center size-4 shrink-0 rounded-[4px] border ${
+                          provider.isConnected && provider.isVisible
+                            ? 'bg-primary border-primary text-primary-foreground'
+                            : 'border-input'
+                        }`}>
+                          <RiCheckLine
+                            className={`${provider.isConnected && provider.isVisible ? "visible" : "invisible"}`}
+                            size={12}
+                            aria-hidden="true"
+                          />
+                        </span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-medium text-sm ${
+                              !provider.isConnected || !provider.isVisible ? "line-through text-muted-foreground/65" : ""
+                            }`}>
+                              {provider.name}
+                            </span>
+                            <span
+                              className={`size-3 rounded-full border border-background/50 ${
+                                provider.color === "emerald"
+                                  ? "bg-emerald-500"
+                                  : provider.color === "orange"
+                                    ? "bg-orange-500"
+                                    : provider.color === "violet"
+                                      ? "bg-violet-500"
+                                      : provider.color === "blue"
+                                        ? "bg-blue-500"
+                                        : provider.color === "rose"
+                                          ? "bg-rose-500"
+                                          : "bg-gray-500"
+                              }`}
+                            />
+                          </div>
+                          {!provider.isConnected && (
+                            <span className="text-xs text-muted-foreground/60">(Not connected)</span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => toggleExternalProviderVisibility(provider.provider)}
+                        disabled={!provider.isConnected}
+                      >
+                        {provider.isConnected && provider.isVisible ? "Hide" : "Show"}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-4 border-t border-border/50">
+                  <ProviderConnectionModal
+                    userId={userId || 0}
+                    externalProviders={externalProviders}
+                    trigger={
+                      <Button variant="default" size="sm" className="w-full">
+                        <RiAddLine className="h-4 w-4 mr-2" />
+                        Connect New Provider
+                      </Button>
+                    }
                   />
-                </button>
-              ))}
-            </div>
-          </div>
+                </div>
+              </PopoverContent>
+            </Popover>
         </div>
       </div>
 
@@ -519,7 +575,20 @@ const formatEventTime = (event: CalendarEvent) => {
                     {(showPreviousEvents ? previousEvents : upcomingEvents).length === 0 && (
                       <SidebarMenuItem>
                         <div className="px-3 py-8 text-sm text-muted-foreground/60 text-center">
-                          No {showPreviousEvents ? "previous" : "upcoming"} events
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center">
+                              <RiCalendarEventLine className="h-6 w-6 text-muted-foreground/60" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="font-medium">No {showPreviousEvents ? "previous" : "upcoming"} events</p>
+                              <p className="text-xs text-muted-foreground/70">
+                                {showPreviousEvents
+                                  ? "Your past events will appear here"
+                                  : "Your future events will appear here when you create them"
+                                }
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </SidebarMenuItem>
                     )}
@@ -592,81 +661,120 @@ const formatEventTime = (event: CalendarEvent) => {
                     </SidebarMenuItem>
                   ))}
 
-                  {/* External Providers Section */}
-                  <div className="pt-4 border-t border-border/30">
-                    <div className="flex items-center justify-between mb-3">
-                      <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                        External Calendars
-                      </SidebarGroupLabel>
-                      <ProviderConnectionModal
-                        userId={userId || 0}
-                        externalProviders={externalProviders}
-                        trigger={
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                            <RiAddLine className="h-3 w-3" />
-                          </Button>
-                        }
-                      />
-                    </div>
-                    {externalProviders.map((provider) => (
-                      <SidebarMenuItem key={provider.id}>
-                        <SidebarMenuButton
-                          onClick={() => toggleExternalProviderVisibility(provider.provider)}
-                          className={`relative rounded-lg justify-between has-focus-visible:border-ring has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px] py-3 px-3 transition-all duration-200 border border-transparent group ${
-                            provider.isConnected
-                              ? "hover:bg-accent/40 hover:border-border/30"
-                              : "opacity-50 cursor-not-allowed"
-                          }`}
-                          disabled={!provider.isConnected}
+                  {calendars.length === 0 && (
+                    <SidebarMenuItem>
+                      <div className="px-3 py-8 text-sm text-muted-foreground/60 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-12 h-12 bg-muted/50 rounded-full flex items-center justify-center">
+                            <RiCalendarEventLine className="h-6 w-6 text-muted-foreground/60" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="font-medium">No calendars yet</p>
+                            <p className="text-xs text-muted-foreground/70">
+                              Create your first calendar to start organizing your events
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </SidebarMenuItem>
+                  )}
+
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors"
                         >
-                          <span className="font-medium flex items-center gap-3 flex-1 min-w-0">
-                            <span className={`grid place-content-center size-4 shrink-0 rounded border transition-all duration-200 ${
-                              provider.isConnected && provider.isVisible
-                                ? 'bg-primary border-primary text-primary-foreground shadow-sm'
-                                : 'border-input group-hover:border-border'
-                            }`}>
-                              <RiCheckLine
-                                className={`transition-opacity duration-200 ${
-                                  provider.isConnected && provider.isVisible ? "opacity-100" : "opacity-0"
-                                }`}
-                                size={12}
-                                aria-hidden="true"
-                              />
-                            </span>
-                            <span
-                              className={`truncate transition-all duration-200 ${
-                                !provider.isConnected || !provider.isVisible
-                                  ? "line-through text-muted-foreground/60"
-                                  : "text-foreground"
+                          <span className="flex items-center gap-3">
+                            <RiAddLine className="h-4 w-4" />
+                            <span className="text-sm font-medium">Add External Calendar</span>
+                          </span>
+                          <RiAddLine className="h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="start" side="right">
+                        <div className="p-4 border-b border-border/50">
+                          <h3 className="font-semibold text-sm">Connect External Calendars</h3>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Connect your external calendar accounts to sync events
+                          </p>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          {externalProviders.map((provider) => (
+                            <div
+                              key={provider.id}
+                              className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                                provider.isConnected
+                                  ? "bg-accent/30 border-border/50"
+                                  : "bg-muted/30 border-border/30"
                               }`}
                             >
-                              {provider.name}
-                            </span>
-                            {!provider.isConnected && (
-                              <span className="text-xs text-muted-foreground/60 truncate">(Not connected)</span>
-                            )}
-                          </span>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span
-                              className={`size-3 rounded-full border border-background/50 shadow-sm transition-transform duration-200 group-hover:scale-110 ${
-                                provider.color === "emerald"
-                                  ? "bg-emerald-500"
-                                  : provider.color === "orange"
-                                    ? "bg-orange-500"
-                                    : provider.color === "violet"
-                                      ? "bg-violet-500"
-                                      : provider.color === "blue"
-                                        ? "bg-blue-500"
-                                        : provider.color === "rose"
-                                          ? "bg-rose-500"
-                                          : "bg-gray-500"
-                              }`}
-                            />
-                          </div>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </div>
+                              <div className="flex items-center gap-3">
+                                <span className={`grid place-content-center size-4 shrink-0 rounded-[4px] border ${
+                                  provider.isConnected && provider.isVisible
+                                    ? 'bg-primary border-primary text-primary-foreground'
+                                    : 'border-input'
+                                }`}>
+                                  <RiCheckLine
+                                    className={`${provider.isConnected && provider.isVisible ? "visible" : "invisible"}`}
+                                    size={12}
+                                    aria-hidden="true"
+                                  />
+                                </span>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`font-medium text-sm ${
+                                      !provider.isConnected || !provider.isVisible ? "line-through text-muted-foreground/65" : ""
+                                    }`}>
+                                      {provider.name}
+                                    </span>
+                                    <span
+                                      className={`size-3 rounded-full border border-background/50 ${
+                                        provider.color === "emerald"
+                                          ? "bg-emerald-500"
+                                          : provider.color === "orange"
+                                            ? "bg-orange-500"
+                                            : provider.color === "violet"
+                                              ? "bg-violet-500"
+                                              : provider.color === "blue"
+                                                ? "bg-blue-500"
+                                                : provider.color === "rose"
+                                                  ? "bg-rose-500"
+                                                  : "bg-gray-500"
+                                      }`}
+                                    />
+                                  </div>
+                                  {!provider.isConnected && (
+                                    <span className="text-xs text-muted-foreground/60">(Not connected)</span>
+                                  )}
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs"
+                                onClick={() => toggleExternalProviderVisibility(provider.provider)}
+                                disabled={!provider.isConnected}
+                              >
+                                {provider.isConnected && provider.isVisible ? "Hide" : "Show"}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="p-4 border-t border-border/50">
+                          <ProviderConnectionModal
+                            userId={userId || 0}
+                            externalProviders={externalProviders}
+                            trigger={
+                              <Button variant="default" size="sm" className="w-full">
+                                <RiAddLine className="h-4 w-4 mr-2" />
+                                Connect New Provider
+                              </Button>
+                            }
+                          />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
