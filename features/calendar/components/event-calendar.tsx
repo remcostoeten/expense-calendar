@@ -583,10 +583,10 @@ export function EventCalendar({
   return (
     <>
       <div className="h-full min-h-[400px] flex flex-col">
-        <div className="sticky top-0 z-40 flex flex-col gap-2 p-2 sm:p-4 border-b bg-background/95 backdrop-bl-3 supports-[backdrop-filter]:bg-background/70">
+        <div className="sticky top-0 z-40 flex flex-col gap-2 p-2 sm:p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              <h2 className="text-base sm:text-lg lg:text-xold transition-all duration-300 truncate">{getViewTitle()}</h2>
+              <h2 className="text-base sm:text-lg lg:text-xl font-bold transition-all duration-300 truncate">{getViewTitle()}</h2>
               <div className="flex items-center gap-1 flex-wrap">
                 <Button
                   variant="outline"
@@ -629,75 +629,75 @@ export function EventCalendar({
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <diclassName="f"flex items-center border rounded-md p-1" role="tablist" aria-label="Calendar views">
-              {([view === "week" ? "week" : "day", "month"] as CalendarView[]).map((viewOption) => (
-                <Button
-                  key={viewOption}
-                  variant={view === viewOption ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setView(viewOption)}
-                  className={cn(
-                    "transition-all duration-200 capitalize text-xs px-2 h-8",
-                    view === viewOption && "shadow-sm",
-                  )}
-                  role="tab"
-                  aria-selected={view === viewOption}
-                  aria-controls="calendar-content"
-                >
-                  {viewOption}
-                </Button>
-              ))}
-            </div>
+              <div className="flex items-center border rounded-md p-1" role="tablist" aria-label="Calendar views">
+                {([view === "week" ? "week" : "day", "month"] as CalendarView[]).map((viewOption) => (
+                  <Button
+                    key={viewOption}
+                    variant={view === viewOption ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setView(viewOption)}
+                    className={cn(
+                      "transition-all duration-200 capitalize text-xs px-2 h-8",
+                      view === viewOption && "shadow-sm",
+                    )}
+                    role="tab"
+                    aria-selected={view === viewOption}
+                    aria-controls="calendar-content"
+                  >
+                    {viewOption}
+                  </Button>
+                ))}
+              </div>
 
-            <Button
-              size="sm"
-              className="transition-all duration-200 hover:scale-105 text-xs h-8 px-2 sm:px-3"
-              onClick={() => {
-                const now = new Date()
-                setEventCreationStart(now)
-                setEventCreationEnd(new Date(now.getTime() + 60 * 60 * 1000))
-                setIsCreatingEvent(true)
-              }}
-            >
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Add Event</span>
-              <span className="sm:hidde
-          </div>>Add</span>
+              <Button
+                size="sm"
+                className="transition-all duration-200 hover:scale-105 text-xs h-8 px-2 sm:px-3"
+                onClick={() => {
+                  const now = new Date()
+                  setEventCreationStart(now)
+                  setEventCreationEnd(new Date(now.getTime() + 60 * 60 * 1000))
+                  setIsCreatingEvent(true)
+                }}
+              >
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Add Event</span>
+                <span className="sm:hidden">Add</span>
               </Button>
             </div>
           </div>
+        </div>
 
         <div
           id="calendar-content"
-              ref={calendarContentRef}
-              className="flex-1 min-h-0 overflow-auto transition-all duration-300 ease-in-out"
-              role="tabpanel"
-              aria-labelledby="calendar-header"
+          ref={calendarContentRef}
+          className="flex-1 min-h-0 overflow-auto transition-all duration-300 ease-in-out"
+          role="tabpanel"
+          aria-labelledby="calendar-header"
         >
-              {renderCurrentView()}
-          </div>
+          {renderCurrentView()}
         </div>
+      </div>
 
-        <EventCreationModal
-          isOpen={isCreatingEvent}
-          onClose={() => setIsCreatingEvent(false)}
-          onSave={handleEventCreate}
-          initialStart={eventCreationStart}
-          initialEnd={eventCreationEnd}
-          userId={userId}
-          onCalendarCreated={onCalendarCreated}
-        />
+      <EventCreationModal
+        isOpen={isCreatingEvent}
+        onClose={() => setIsCreatingEvent(false)}
+        onSave={handleEventCreate}
+        initialStart={eventCreationStart}
+        initialEnd={eventCreationEnd}
+        userId={userId}
+        onCalendarCreated={onCalendarCreated}
+      />
 
-        <EventEditModal
-          isOpen={isEditingEvent}
-          onClose={() => {
-            setIsEditingEvent(false)
-            setEditingEvent(null)
-          }}
-          onSave={handleEventUpdate}
-          onDelete={handleEventDelete}
-          event={editingEvent}
-        />
-      </>
-      )
+      <EventEditModal
+        isOpen={isEditingEvent}
+        onClose={() => {
+          setIsEditingEvent(false)
+          setEditingEvent(null)
+        }}
+        onSave={handleEventUpdate}
+        onDelete={handleEventDelete}
+        event={editingEvent}
+      />
+    </>
+  )
 }

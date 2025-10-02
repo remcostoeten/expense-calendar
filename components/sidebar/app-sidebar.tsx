@@ -163,20 +163,18 @@ function MobileSidebarContent() {
                 className="w-full flex items-center justify-between p-2 rounded-md hover:bg-accent/50 transition-colors"
               >
                 <span className="flex items-center gap-3">
-                  <Checkbox id={calendar.id} className="sr-only peer" checked={calendar.isVisible} readOnly />
-                  <span className="grid place-content-center size-4 shrink-0 rounded-[4px] border border-input peer-data-[state=checked]:bg-primary peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary-foreground">
+                  <span className={`grid place-content-center size-4 shrink-0 rounded-[4px] border border-input ${calendar.isVisible ? 'bg-primary border-primary text-primary-foreground' : ''}`}>
                     <RiCheckLine
                       className={`${calendar.isVisible ? "visible" : "invisible"}`}
                       size={12}
                       aria-hidden="true"
                     />
                   </span>
-                  <label
-                    htmlFor={calendar.id}
+                  <span
                     className={`${!calendar.isVisible ? "line-through text-muted-foreground/65" : ""} text-sm font-medium`}
                   >
                     {calendar.name}
-                  </label>
+                  </span>
                 </span>
                 <span
                   className={`size-3 rounded-full border-2 border-white shadow-sm ${
@@ -367,44 +365,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   {calendars.map((calendar) => (
                     <SidebarMenuItem key={calendar.id}>
                       <SidebarMenuButton
-                        asChild
+                        onClick={() => toggleColorVisibility(calendar.color)}
                         className="relative rounded-md [&>svg]:size-auto justify-between has-focus-visible:border-ring has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px]"
                       >
-                        <button type="button" onClick={() => toggleColorVisibility(calendar.color)} className="w-full">
-                          <span className="font-medium flex items-center gap-3">
-                            <Checkbox id={calendar.id} className="sr-only peer" checked={calendar.isVisible} readOnly />
-                            <span className="grid place-content-center size-4 shrink-0 rounded-[4px] border border-input peer-data-[state=checked]:bg-primary peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary-foreground">
-                              <RiCheckLine
-                                className={`${calendar.isVisible ? "visible" : "invisible"}`}
-                                size={12}
-                                aria-hidden="true"
-                              />
-                            </span>
-                            <label
-                              htmlFor={calendar.id}
-                              className={`${!calendar.isVisible ? "line-through text-muted-foreground/65" : ""} after:absolute after:inset-0 pointer-events-none`}
-                            >
-                              {calendar.name}
-                            </label>
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`size-3 rounded-full border-2 border-white shadow-sm ${
-                                calendar.color === "emerald"
-                                  ? "bg-emerald-500"
-                                  : calendar.color === "orange"
-                                    ? "bg-orange-500"
-                                    : calendar.color === "violet"
-                                      ? "bg-violet-500"
-                                      : calendar.color === "blue"
-                                        ? "bg-blue-500"
-                                        : calendar.color === "rose"
-                                          ? "bg-rose-500"
-                                          : "bg-gray-500"
-                              }`}
+                        <span className="font-medium flex items-center gap-3">
+                          <span className={`grid place-content-center size-4 shrink-0 rounded-[4px] border border-input ${calendar.isVisible ? 'bg-primary border-primary text-primary-foreground' : ''}`}>
+                            <RiCheckLine
+                              className={`${calendar.isVisible ? "visible" : "invisible"}`}
+                              size={12}
+                              aria-hidden="true"
                             />
-                          </div>
-                        </button>
+                          </span>
+                          <span
+                            className={`${!calendar.isVisible ? "line-through text-muted-foreground/65" : ""}`}
+                          >
+                            {calendar.name}
+                          </span>
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`size-3 rounded-full border-2 border-white shadow-sm ${
+                              calendar.color === "emerald"
+                                ? "bg-emerald-500"
+                                : calendar.color === "orange"
+                                  ? "bg-orange-500"
+                                  : calendar.color === "violet"
+                                    ? "bg-violet-500"
+                                    : calendar.color === "blue"
+                                      ? "bg-blue-500"
+                                      : calendar.color === "rose"
+                                        ? "bg-rose-500"
+                                        : "bg-gray-500"
+                            }`}
+                          />
+                        </div>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
