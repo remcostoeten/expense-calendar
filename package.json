@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-"build": "NODE_ENV=production next build --no-lint --experimental-build-mode=compile",
+    "build": "NODE_ENV=production next build --no-lint --experimental-build-mode=compile",
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
@@ -13,7 +13,8 @@
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
     "db:migrate": "bunx drizzle-kit migrate",
-    "db:push": "bunx drizzle-kit push"
+    "db:push": "bunx drizzle-kit push",
+    "postinstall": "node scripts/fix-stack-auth.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -101,6 +102,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "glob": "^11.0.0",
     "prettier": "^3.6.2",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
