@@ -1,16 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import type { OnboardingData } from "../onboarding-flow"
+import { Badge } from "@/components/ui/badge"
+import { calculateDistance } from "@/modules/onboarding/services/distance-service"
+import RouteMap from "@/components/maps/route-map"
+import type { TOnboarding } from "../onboarding-flow"
 
-interface AddressesStepProps {
-  data: OnboardingData
-  updateData: (updates: Partial<OnboardingData>) => void
+type TProps = {
+  data: TOnboarding
+  updateData: (updates: Partial<TOnboarding>) => void
   nextStep: () => void
   prevStep: () => void
   isFirstStep: boolean
@@ -18,11 +21,11 @@ interface AddressesStepProps {
   completeOnboarding: () => void
 }
 
-export default function AddressesStep({
+export function AddressesStep({
   data,
   updateData,
   nextStep
-}: AddressesStepProps) {
+}: TProps) {
   const [homeAddress, setHomeAddress] = useState({
     street: data.homeStreet || '',
     postalCode: data.homePostalCode || '',
@@ -34,6 +37,10 @@ export default function AddressesStep({
     postalCode: data.officePostalCode || '',
     city: data.officeCity || ''
   })
+
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false)
+  const [calculationError, setCalculationError] = useState<string | null>(null)
+  const [duration, setDuration] = useState<number | undefined>()
 
   const updateHomeAddress = (field: keyof typeof homeAddress, value: string) => {
     const newAddress = { ...homeAddress, [field]: value }
@@ -61,22 +68,51 @@ export default function AddressesStep({
     })
   }
 
-  const calculateDistance = async () => {
-    // TODO: Implement distance calculation using a mapping service
-    // For now, we'll use a mock calculation
-    const mockDistance = Math.round(Math.random() * 50 + 5) // 5-55 km
-    updateData({ distanceKm: mockDistance })
+  const handleCalculateDistance = async () => {
+    if (!data.homeAddress || !data.officeAddress) return
+    
+    setIsCalculatingDistance(true)
+    setCalculationError(null)
+    
+    try {
+      const result = await calculateDistance(data.homeAddress, data.officeAddress)
+      
+      if (result.success) {
+        updateData({ 
+          distanceKm: result.distance 
+        })
+        setDuration(result.duration)
+      } else {
+        setCalculationError(result.error || "Failed to calculate distance")
+      }
+    } catch (error) {
+      console.error("Distance calculation error:", error)
+      setCalculationError("An unexpected error occurred")
+    } finally {
+      setIsCalculatingDistance(false)
+    }
   }
 
   const isFormValid = homeAddress.street && homeAddress.postalCode && homeAddress.city &&
                      officeAddress.street && officeAddress.postalCode && officeAddress.city
+
+  // Auto-calculate distance when both addresses are complete
+  useEffect(() => {
+    if (isFormValid && !data.distanceKm && !isCalculatingDistance) {
+      const debounceTimer = setTimeout(() => {
+        handleCalculateDistance()
+      }, 1000) // Wait 1 second after user stops typing
+      
+      return () => clearTimeout(debounceTimer)
+    }
+  }, [data.homeAddress, data.officeAddress, isFormValid])
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Your Addresses</h2>
         <p className="text-muted-foreground">
-          Enter your home and office addresses to calculate commuting distance
+          Enter your home and office addresses to automatically calculate commuting distance
         </p>
       </div>
 
@@ -173,37 +209,79 @@ export default function AddressesStep({
           </CardContent>
         </Card>
 
-        {/* Distance Calculation */}
+        {/* Interactive Map and Distance */}
         {isFormValid && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span>📏</span>
-                Distance Calculation
-              </CardTitle>
-              <CardDescription>
-                Calculate the distance between your home and office
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  {data.distanceKm ? (
-                    <p className="text-lg font-semibold">
-                      Distance: {data.distanceKm} km
-                    </p>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      Click to calculate distance
-                    </p>
+          <>
+            <RouteMap
+              homeAddress={data.homeAddress}
+              officeAddress={data.officeAddress}
+              distance={data.distanceKm}
+              duration={duration}
+              onCalculateRoute={handleCalculateDistance}
+            />
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>📏</span>
+                  Distance & Duration
+                </CardTitle>
+                <CardDescription>
+                  Automatically calculated commute information
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    {isCalculatingDistance ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                        <span className="text-muted-foreground">Calculating distance...</span>
+                      </div>
+                    ) : data.distanceKm ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-lg font-semibold">
+                            {data.distanceKm} km
+                          </Badge>
+                          {duration && (
+                            <Badge variant="outline">
+                              ~{Math.round(duration / 60)} hours
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Estimated commute distance via car route
+                        </p>
+                      </div>
+                    ) : calculationError ? (
+                      <div className="space-y-1">
+                        <p className="text-sm text-destructive">{calculationError}</p>
+                        <Button 
+                          onClick={handleCalculateDistance} 
+                          variant="outline" 
+                          size="sm"
+                          disabled={isCalculatingDistance}
+                        >
+                          Retry Calculation
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        Distance will be calculated automatically
+                      </p>
+                    )}
+                  </div>
+                  
+                  {!isCalculatingDistance && !data.distanceKm && !calculationError && (
+                    <Button onClick={handleCalculateDistance} variant="outline">
+                      Calculate Now
+                    </Button>
                   )}
                 </div>
-                <Button onClick={calculateDistance} variant="outline">
-                  Calculate Distance
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </>
         )}
       </div>
 
@@ -211,10 +289,16 @@ export default function AddressesStep({
         <Button 
           onClick={nextStep} 
           className="w-full"
-          disabled={!isFormValid || !data.distanceKm}
+          disabled={!isFormValid || (!data.distanceKm && !calculationError)}
         >
           Continue
         </Button>
+        <p className="text-xs text-muted-foreground text-center mt-2">
+          {calculationError 
+            ? "You can continue even if distance calculation failed - you can update it later"
+            : "Distance calculation is required to continue"
+          }
+        </p>
       </div>
     </div>
   )
