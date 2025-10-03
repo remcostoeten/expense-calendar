@@ -2,16 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { useUser } from '@stackframe/stack'
 import CalendarPageWrapper from "@/features/calendar/components/calendar-page-wrapper"
-import { withAuth } from "@/lib/auth/with-auth"
 import { toast } from "sonner"
 import { useStackAuthHelper } from "@/lib/auth/stack-auth-helper"
 
-interface ClientCalendarProps {
-  user: any
-}
-
-function ClientCalendar({ user }: ClientCalendarProps) {
+export default function ClientCalendar() {
+  const user = useUser()
   const searchParams = useSearchParams()
   const { getInternalUserId } = useStackAuthHelper()
   const [internalUserId, setInternalUserId] = useState<string | null>(null)
@@ -28,7 +25,7 @@ function ClientCalendar({ user }: ClientCalendarProps) {
     if (error) {
       toast.error(error)
     }
-  }, [searchParams, toast])
+  }, [searchParams])
 
   useEffect(() => {
     const fetchInternalUserId = async () => {
@@ -58,5 +55,3 @@ function ClientCalendar({ user }: ClientCalendarProps) {
     <CalendarPageWrapper userId={internalUserId} />
   )
 }
-
-export default withAuth(ClientCalendar)

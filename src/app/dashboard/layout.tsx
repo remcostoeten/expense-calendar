@@ -1,4 +1,4 @@
-import { AppGuard } from "@/components/auth/app-guard"
+import { Guard } from "@/components/auth/guard"
 
 export default function DashboardLayout({
   children,
@@ -6,8 +6,8 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <AppGuard requireAuth={true} requireOnboarding={true}>
+    <Guard requireAuth={true} requireOnboarding={true}>
       {children}
-    </AppGuard>
+    </Guard>
   )
 }

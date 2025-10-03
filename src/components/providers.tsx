@@ -2,7 +2,6 @@
 
 import type React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
-import { AuthProvider } from "@/lib/auth/auth-context"
 import { Toaster } from "sonner"
 import { TooltipProvider } from "./ui/tooltip"
 
@@ -18,11 +17,9 @@ export function Providers({ children }: TProps) {
       enableSystem
       disableTransitionOnChange
     >
-      <AuthProvider>
-        <TooltipProvider>
-          {children}
-        </TooltipProvider>
-      </AuthProvider>
+      <TooltipProvider>
+        {children}
+      </TooltipProvider>
       <Toaster position="top-right" />
     </NextThemesProvider>
   )

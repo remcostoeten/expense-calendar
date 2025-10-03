@@ -1,4 +1,3 @@
-import { AppGuard } from "@/components/auth/app-guard"
 import { DualSidebarLayout } from "@/components/sidebar/dual-sidebar-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -6,8 +5,7 @@ export const dynamic = 'force-dynamic'
 
 export default function TripsPage() {
   return (
-    <AppGuard requireAuth={true} requireOnboarding={true}>
-      <DualSidebarLayout>
+    <DualSidebarLayout>
         <div className="flex flex-1 flex-col gap-4 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -46,6 +44,5 @@ export default function TripsPage() {
           </div>
         </div>
       </DualSidebarLayout>
-    </AppGuard>
   )
 }
