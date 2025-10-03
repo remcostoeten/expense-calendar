@@ -106,12 +106,13 @@ export type CreateCalendarInput = {
   isDefault?: boolean
 }
 
-export function useCreateEvent(options?: {
+export function useCreateEvent(initialEvents: Event[] = [], options?: {
   onSuccess?: (event: Event) => void
   onError?: (error: string) => void
 }) {
   return useApi<CreateEventInput, Event, Event[]>({
     action: createEventAction,
+    initialData: initialEvents,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentEvents, input) => {
@@ -136,12 +137,13 @@ export function useCreateEvent(options?: {
   })
 }
 
-export function useUpdateEvent(options?: {
+export function useUpdateEvent(initialEvents: Event[] = [], options?: {
   onSuccess?: (event: Event) => void
   onError?: (error: string) => void
 }) {
   return useApi<UpdateEventInput, Event, Event[]>({
     action: (input) => updateEventAction(input.eventId, input.data),
+    initialData: initialEvents,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentEvents, input) => {
@@ -154,12 +156,13 @@ export function useUpdateEvent(options?: {
   })
 }
 
-export function useDeleteEvent(options?: {
+export function useDeleteEvent(initialEvents: Event[] = [], options?: {
   onSuccess?: () => void
   onError?: (error: string) => void
 }) {
   return useApi<DeleteEventInput, void, Event[]>({
     action: (input) => deleteEventAction(input.eventId),
+    initialData: initialEvents,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentEvents, input) => {
@@ -170,12 +173,13 @@ export function useDeleteEvent(options?: {
   })
 }
 
-export function useCreateCalendar(options?: {
+export function useCreateCalendar(initialCalendars: Calendar[] = [], options?: {
   onSuccess?: (calendar: Calendar) => void
   onError?: (error: string) => void
 }) {
   return useApi<CreateCalendarInput, Calendar, Calendar[]>({
     action: createCalendarAction,
+    initialData: initialCalendars,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentCalendars, input) => {
@@ -198,11 +202,11 @@ export function useCreateCalendar(options?: {
   })
 }
 
-export function useCalendar() {
-  const createEvent = useCreateEvent()
-  const updateEvent = useUpdateEvent()
-  const deleteEvent = useDeleteEvent()
-  const createCalendar = useCreateCalendar()
+export function useCalendar(initialEvents: Event[] = [], initialCalendars: Calendar[] = []) {
+  const createEvent = useCreateEvent(initialEvents)
+  const updateEvent = useUpdateEvent(initialEvents)
+  const deleteEvent = useDeleteEvent(initialEvents)
+  const createCalendar = useCreateCalendar(initialCalendars)
 
   return {
     createEvent: {

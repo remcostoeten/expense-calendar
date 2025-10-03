@@ -1,38 +1,29 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useCallback, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { calculateDistance } from "@/modules/onboarding/services/distance-service"
+import { toast } from "sonner"
+import { calculateDistance } from "@/modules/onboarding/services/google-maps-service"
 import RouteMap from "@/components/maps/route-map"
-import type { TOnboarding } from "../onboarding-flow"
+import type { TStepProps, TAddress } from "@/modules/onboarding/types"
 
-type TProps = {
-  data: TOnboarding
-  updateData: (updates: Partial<TOnboarding>) => void
-  nextStep: () => void
-  prevStep: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
-  completeOnboarding: () => void
+function buildFullAddress(address: TAddress): string {
+  return `${address.street}, ${address.postalCode} ${address.city}, Netherlands`
 }
 
-export function AddressesStep({
-  data,
-  updateData,
-  nextStep
-}: TProps) {
-  const [homeAddress, setHomeAddress] = useState({
+export function AddressesStep({ data, updateData, nextStep }: TStepProps) {
+  const [homeAddress, setHomeAddress] = useState<TAddress>({
     street: data.homeStreet || '',
     postalCode: data.homePostalCode || '',
     city: data.homeCity || ''
   })
 
-  const [officeAddress, setOfficeAddress] = useState({
+  const [officeAddress, setOfficeAddress] = useState<TAddress>({
     street: data.officeStreet || '',
     postalCode: data.officePostalCode || '',
     city: data.officeCity || ''
@@ -42,33 +33,35 @@ export function AddressesStep({
   const [calculationError, setCalculationError] = useState<string | null>(null)
   const [duration, setDuration] = useState<number | undefined>()
 
-  const updateHomeAddress = (field: keyof typeof homeAddress, value: string) => {
-    const newAddress = { ...homeAddress, [field]: value }
-    setHomeAddress(newAddress)
-    
-    const fullAddress = `${newAddress.street}, ${newAddress.postalCode} ${newAddress.city}, Netherlands`
-    updateData({
-      homeStreet: newAddress.street,
-      homePostalCode: newAddress.postalCode,
-      homeCity: newAddress.city,
-      homeAddress: fullAddress
+  const updateHomeAddress = useCallback(function(field: keyof TAddress, value: string) {
+    setHomeAddress(prev => {
+      const newAddress = { ...prev, [field]: value }
+      const fullAddress = buildFullAddress(newAddress)
+      updateData({
+        homeStreet: newAddress.street,
+        homePostalCode: newAddress.postalCode,
+        homeCity: newAddress.city,
+        homeAddress: fullAddress
+      })
+      return newAddress
     })
-  }
+  }, [updateData])
 
-  const updateOfficeAddress = (field: keyof typeof officeAddress, value: string) => {
-    const newAddress = { ...officeAddress, [field]: value }
-    setOfficeAddress(newAddress)
-    
-    const fullAddress = `${newAddress.street}, ${newAddress.postalCode} ${newAddress.city}, Netherlands`
-    updateData({
-      officeStreet: newAddress.street,
-      officePostalCode: newAddress.postalCode,
-      officeCity: newAddress.city,
-      officeAddress: fullAddress
+  const updateOfficeAddress = useCallback(function(field: keyof TAddress, value: string) {
+    setOfficeAddress(prev => {
+      const newAddress = { ...prev, [field]: value }
+      const fullAddress = buildFullAddress(newAddress)
+      updateData({
+        officeStreet: newAddress.street,
+        officePostalCode: newAddress.postalCode,
+        officeCity: newAddress.city,
+        officeAddress: fullAddress
+      })
+      return newAddress
     })
-  }
+  }, [updateData])
 
-  const handleCalculateDistance = async () => {
+  const handleCalculateDistance = useCallback(async function() {
     if (!data.homeAddress || !data.officeAddress) return
     
     setIsCalculatingDistance(true)
@@ -78,34 +71,39 @@ export function AddressesStep({
       const result = await calculateDistance(data.homeAddress, data.officeAddress)
       
       if (result.success) {
-        updateData({ 
-          distanceKm: result.distance 
-        })
+        updateData({ distanceKm: result.distance })
         setDuration(result.duration)
+        toast.success(`Distance calculated: ${result.distance} km`)
       } else {
-        setCalculationError(result.error || "Failed to calculate distance")
+        const error = result.error || "Failed to calculate distance"
+        setCalculationError(error)
+        toast.error(error)
       }
     } catch (error) {
       console.error("Distance calculation error:", error)
-      setCalculationError("An unexpected error occurred")
+      const errorMessage = "An unexpected error occurred"
+      setCalculationError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsCalculatingDistance(false)
     }
-  }
+  }, [data.homeAddress, data.officeAddress, updateData])
 
-  const isFormValid = homeAddress.street && homeAddress.postalCode && homeAddress.city &&
-                     officeAddress.street && officeAddress.postalCode && officeAddress.city
+  const isFormValid = useMemo(function() {
+    return Boolean(
+      homeAddress.street && homeAddress.postalCode && homeAddress.city &&
+      officeAddress.street && officeAddress.postalCode && officeAddress.city
+    )
+  }, [homeAddress, officeAddress])
 
-  // Auto-calculate distance when both addresses are complete
-  useEffect(() => {
+  useEffect(function() {
     if (isFormValid && !data.distanceKm && !isCalculatingDistance) {
-      const debounceTimer = setTimeout(() => {
-        handleCalculateDistance()
-      }, 1000) // Wait 1 second after user stops typing
-      
-      return () => clearTimeout(debounceTimer)
+      const debounceTimer = setTimeout(handleCalculateDistance, 1000)
+      return function() { clearTimeout(debounceTimer) }
     }
-  }, [data.homeAddress, data.officeAddress, isFormValid])
+  }, [isFormValid, data.distanceKm, isCalculatingDistance, handleCalculateDistance])
+
+  const canProceed = isFormValid && (data.distanceKm || calculationError)
 
   return (
     <div className="space-y-6">
@@ -117,7 +115,6 @@ export function AddressesStep({
       </div>
 
       <div className="grid gap-6">
-        {/* Home Address */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -164,7 +161,6 @@ export function AddressesStep({
 
         <Separator />
 
-        {/* Office Address */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -209,7 +205,6 @@ export function AddressesStep({
           </CardContent>
         </Card>
 
-        {/* Interactive Map and Distance */}
         {isFormValid && (
           <>
             <RouteMap
@@ -235,7 +230,7 @@ export function AddressesStep({
                   <div className="space-y-2">
                     {isCalculatingDistance ? (
                       <div className="flex items-center gap-2">
-                        <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                        <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
                         <span className="text-muted-foreground">Calculating distance...</span>
                       </div>
                     ) : data.distanceKm ? (
@@ -246,7 +241,7 @@ export function AddressesStep({
                           </Badge>
                           {duration && (
                             <Badge variant="outline">
-                              ~{Math.round(duration / 60)} hours
+                              ~{Math.round(duration / 60)} min
                             </Badge>
                           )}
                         </div>
@@ -289,7 +284,7 @@ export function AddressesStep({
         <Button 
           onClick={nextStep} 
           className="w-full"
-          disabled={!isFormValid || (!data.distanceKm && !calculationError)}
+          disabled={!canProceed}
         >
           Continue
         </Button>

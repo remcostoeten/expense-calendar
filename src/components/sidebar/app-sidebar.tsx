@@ -2,6 +2,7 @@
 
 import type * as React from "react"
 import { useState } from "react"
+import { useUser } from '@stackframe/stack'
 import {
   RiCheckLine,
   RiSidebarUnfoldLine,
@@ -20,7 +21,6 @@ import { CalendarContextMenu } from "@/features/calendar/components/calendar-con
 import { useTransition } from "react"
 import { useRightSidebarStore } from "@/stores/right-sidebar-store"
 import { type CalendarEvent, useCalendarStore } from "@/stores/calendar-store"
-import { useCalendarData } from "@/features/calendar/contexts/calendar-data-context"
 import { useCalendarSync } from "@/server/api-hooks/use-calendar-sync"
 import { useProviderConnections } from "@/features/calendar/hooks/use-provider-connections"
 import { useCalendarManagement } from "@/server/api-hooks/use-calendar-management"
@@ -63,11 +63,11 @@ function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers?: {
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false)
   const [showPreviousEvents, setShowPreviousEvents] = useState(false)
 
-  const { userId } = useCalendarData()
+  const user = useUser()
+  const userId = user?.id ? parseInt(user.id, 10) : undefined
 
   const { mutate: mutateCalendars } = useCalendarSync(userId || 0)
 
-  const { connections, isLoading: isLoadingConnections } = useProviderConnections(userId || 0)
 
   const upcomingEvents = getUpcomingEvents(5)
   const previousEvents = getPreviousEvents(10)
@@ -421,8 +421,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     setShowRecurringEvents,
   } = useCalendarStore()
 
-  // Get userId from calendar data context
-  const { userId } = useCalendarData()
+  const user = useUser()
+  const userId = user?.id ? parseInt(user.id, 10) : undefined
 
   // Get mutate function to refresh calendars after creation
   const { mutate: mutateCalendars } = useCalendarSync(userId || 0)

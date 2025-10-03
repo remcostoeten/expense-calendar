@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { updateCalendar } from "../mutations/update-calendar"
 import { deleteCalendar } from "../mutations/delete-calendar"
 import { reorderCalendars } from "../mutations/reorder-calendars"
-import { getCalendarsForUser } from "../queries/get-calendars-for-user"
+import { getCalendars } from "../queries/get-calendars"
 
 /**
  * Updates a calendar's properties
@@ -69,7 +69,7 @@ export async function reorderCalendarsAction(
  */
 export async function getCalendarsForUserAction(userId: number) {
   try {
-    const userCalendars = await getCalendarsForUser(userId)
+    const userCalendars = await getCalendars(userId)
     return { success: true, calendars: userCalendars }
   } catch (error) {
     return {

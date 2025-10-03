@@ -1,13 +1,10 @@
 "use client"
 
 import { useMemo, useEffect, useRef } from "react"
-import useSWR from "swr"
-import { useSWRConfig } from "swr"
 import { type TCalendarEvent, EventCalendar } from "./event-calendar"
 import { CalendarShell } from "./calendar-shell"
-import { useCalendar } from "@/server/api-hooks/use-calendar"
-import { useCalendarSync } from "@/server/api-hooks/use-calendar-sync"
-import { useCalendarData } from "../contexts/calendar-data-context"
+import { useCalendarData } from "../hooks/use-calendar-data"
+import { useCalendarStore } from "@/stores/calendar-store"
 import type { Event, Calendar } from "@/server/schema"
 import { COLOR_MAP } from "@/lib/colors"
 
@@ -35,11 +32,10 @@ function mapEventToCalendarEvent(event: Event, calendars: Calendar[]): TCalendar
 }
 
 export default function BigCalendar({ userId }: TProps) {
-  const calendarHook = useCalendar()
-  const { events, calendars } = useCalendarData()
   const userIdNum = parseInt(userId, 10)
+  const { events, calendars } = useCalendarStore()
+  const { calendar, calendarManagement } = useCalendarData(userIdNum)
   const initializationRef = useRef(false)
-  const { mutate: globalMutate } = useSWRConfig()
   
   if (!userId || isNaN(userIdNum) || userIdNum <= 0) {
     console.error("Invalid user ID:", { userId, userIdNum })
@@ -52,9 +48,6 @@ export default function BigCalendar({ userId }: TProps) {
       </div>
     )
   }
-  
-  const { mutate: mutateCalendars } = useCalendarSync(userIdNum)
-  const { mutate: mutateEvents } = useSWR(`events-${userId}`, null)
 
   const isLoading = false // Loading is handled by the wrapper
   const hasData = calendars.length > 0 || events.length > 0
@@ -69,8 +62,7 @@ export default function BigCalendar({ userId }: TProps) {
       initializationRef.current = true
 
       try {
-        await calendarHook.createDefaultCalendars.execute({ userId: userIdNum })
-        await mutateCalendars()
+        await calendar.createDefaultCalendars.execute({ userId: userIdNum })
       } catch (error) {
         console.error("Error creating default calendars:", error)
         // Reset the flag on error so it can retry
@@ -82,7 +74,7 @@ export default function BigCalendar({ userId }: TProps) {
     if (!initializationRef.current && calendars.length === 0) {
       initializeCalendars()
     }
-  }, [calendars.length, userIdNum, calendarHook.createDefaultCalendars, mutateCalendars])
+  }, [calendars.length, userIdNum, calendar.createDefaultCalendars])
 
   const calendarEvents = useMemo(() => {
     return events.map((event) => mapEventToCalendarEvent(event, calendars))
@@ -95,47 +87,20 @@ export default function BigCalendar({ userId }: TProps) {
       return
     }
 
-    try {
-      const optimisticEvent: Event = {
-        id: Date.now(),
-        calendarId: calendar.id,
-        userId: userIdNum,
-        title: event.title,
-        description: event.description || null,
-        startTime: event.start,
-        endTime: event.end,
-        location: event.location || null,
-        allDay: event.allDay || false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-
-      await globalMutate(
-        `events-${userId}`,
-        (current?: Event[]) => (current ? [...current, optimisticEvent] : [optimisticEvent]),
-        { revalidate: false, rollbackOnError: true }
-      )
-
-      await calendarHook.createEvent.execute({
-        calendarId: calendar.id,
-        userId: userIdNum,
-        title: event.title,
-        description: event.description,
-        startTime: event.start,
-        endTime: event.end,
-        location: event.location,
-        allDay: event.allDay,
-      })
-
-      await mutateEvents()
-    } catch (error) {
-      console.error("Error creating event:", error)
-      await mutateEvents()
-    }
+    await calendar.createEvent.execute({
+      calendarId: calendar.id,
+      userId: userIdNum,
+      title: event.title,
+      description: event.description,
+      startTime: event.start,
+      endTime: event.end,
+      location: event.location,
+      allDay: event.allDay,
+    })
   }
 
   async function handleEventUpdate(updatedEvent: TCalendarEvent) {
-    await calendarHook.updateEvent.execute({
+    await calendar.updateEvent.execute({
       eventId: updatedEvent.id,
       data: {
         title: updatedEvent.title,
@@ -146,17 +111,14 @@ export default function BigCalendar({ userId }: TProps) {
         allDay: updatedEvent.allDay,
       },
     })
-
-    mutateEvents()
   }
 
   async function handleEventDelete(eventId: string) {
-    await calendarHook.deleteEvent.execute({ eventId })
-    mutateEvents()
+    await calendar.deleteEvent.execute({ eventId })
   }
 
   async function handleCalendarCreated() {
-    await mutateCalendars()
+    // Calendar creation is handled by the optimistic updates
   }
 
   return (

@@ -1,14 +1,16 @@
 "use server"
 
-import { calendarRepository } from "../repository/calendar-repository"
+import { getCalendars } from "../queries/get-calendars"
 
 export async function getCalendarsAction(userId: number) {
-  const result = await calendarRepository.findByUserId(userId)
-
-  if (!result.ok) {
-    console.error("Failed to fetch calendars:", result.error)
-    return { success: false, error: result.error }
+  try {
+    const calendars = await getCalendars(userId)
+    return { success: true, data: calendars }
+  } catch (error) {
+    console.error("Failed to fetch calendars:", error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Failed to fetch calendars" 
+    }
   }
-
-  return { success: true, data: result.value }
 }

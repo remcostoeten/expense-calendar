@@ -1,11 +1,10 @@
 "use server"
 
-import { UserSettingsRepository, type UserSettingsData } from "../repository/user-settings-repository"
+import { upsertUserSettings, type UserSettingsData } from "../mutations/upsert-user-settings"
 
 export async function updateUserSettingsAction(userId: number, settings: UserSettingsData) {
   try {
-    const repository = new UserSettingsRepository()
-    const updatedSettings = await repository.upsertUserSettings(userId, settings)
+    const updatedSettings = await upsertUserSettings(userId, settings)
     
     return {
       success: true,

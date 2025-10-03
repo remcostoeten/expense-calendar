@@ -1,37 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import type { TOnboarding } from "../onboarding-flow"
+import { DAYS } from "@/modules/onboarding/constants"
+import type { TStepProps } from "@/modules/onboarding/types"
 
-interface HomeOfficeStepProps {
-  data: TOnboarding
-  updateData: (updates: Partial<TOnboarding>) => void
-  nextStep: () => void
-  prevStep: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
-  completeOnboarding: () => void
-}
-
-const DAYS = [
-  { id: 1, name: 'Monday', short: 'Mo' },
-  { id: 2, name: 'Tuesday', short: 'Tu' },
-  { id: 3, name: 'Wednesday', short: 'We' },
-  { id: 4, name: 'Thursday', short: 'Th' },
-  { id: 5, name: 'Friday', short: 'Fr' },
-  { id: 6, name: 'Saturday', short: 'Sa' },
-  { id: 0, name: 'Sunday', short: 'Su' },
-]
-
-export function HomeOfficeStep({
-  data,
-  updateData,
-  nextStep
-}: HomeOfficeStepProps) {
+export function HomeOfficeStep({ data, updateData, nextStep }: TStepProps) {
   const [hasHomeOfficeAllowance, setHasHomeOfficeAllowance] = useState<boolean>(
     data.hasHomeOfficeAllowance
   )
@@ -39,7 +16,7 @@ export function HomeOfficeStep({
     data.homeOfficeDays || []
   )
 
-  const handleHomeOfficeChange = (value: string) => {
+  const handleHomeOfficeChange = useCallback(function(value: string) {
     const hasAllowance = value === 'yes'
     setHasHomeOfficeAllowance(hasAllowance)
     
@@ -51,38 +28,35 @@ export function HomeOfficeStep({
       hasHomeOfficeAllowance: hasAllowance,
       homeOfficeDays: hasAllowance ? selectedDays : []
     })
-  }
+  }, [selectedDays, updateData])
 
-  const toggleDay = (dayId: number) => {
-    // Don't allow selection of days that are already office days
+  const toggleDay = useCallback(function(dayId: number) {
     if (data.fixedOfficeDays.includes(dayId)) {
       return
     }
 
-    const newSelectedDays = selectedDays.includes(dayId)
-      ? selectedDays.filter(id => id !== dayId)
-      : [...selectedDays, dayId]
-    
-    setSelectedDays(newSelectedDays)
-    updateData({
-      homeOfficeDays: newSelectedDays
+    setSelectedDays(prev => {
+      const newSelectedDays = prev.includes(dayId)
+        ? prev.filter(id => id !== dayId)
+        : [...prev, dayId]
+      
+      updateData({ homeOfficeDays: newSelectedDays })
+      return newSelectedDays
     })
-  }
+  }, [data.fixedOfficeDays, updateData])
 
-  const clearSelection = () => {
+  const clearSelection = useCallback(function() {
     setSelectedDays([])
-    updateData({
-      homeOfficeDays: []
-    })
-  }
+    updateData({ homeOfficeDays: [] })
+  }, [updateData])
 
-  const isDayDisabled = (dayId: number) => {
+  const isDayDisabled = useCallback(function(dayId: number): boolean {
     return data.fixedOfficeDays.includes(dayId)
-  }
+  }, [data.fixedOfficeDays])
 
-  const getAvailableDays = () => {
-    return DAYS.filter(day => !isDayDisabled(day.id))
-  }
+  const selectedDayNames = useMemo(function() {
+    return selectedDays.map(id => DAYS.find(d => d.id === id)?.name).join(', ')
+  }, [selectedDays])
 
   return (
     <div className="space-y-6">
@@ -147,7 +121,7 @@ export function HomeOfficeStep({
               </div>
               
               <div className="grid grid-cols-7 gap-2">
-                {DAYS.map((day) => {
+                {DAYS.map(function(day) {
                   const isSelected = selectedDays.includes(day.id)
                   const isDisabled = isDayDisabled(day.id)
                   
@@ -182,7 +156,7 @@ export function HomeOfficeStep({
 
               {selectedDays.length > 0 && (
                 <div className="text-sm text-muted-foreground">
-                  <p>Selected home office days: {selectedDays.map(id => DAYS.find(d => d.id === id)?.name).join(', ')}</p>
+                  <p>Selected home office days: {selectedDayNames}</p>
                 </div>
               )}
             </div>
@@ -191,10 +165,7 @@ export function HomeOfficeStep({
       </Card>
 
       <div className="pt-4">
-        <Button 
-          onClick={nextStep} 
-          className="w-full"
-        >
+        <Button onClick={nextStep} className="w-full">
           Continue
         </Button>
       </div>

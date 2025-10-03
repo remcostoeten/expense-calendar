@@ -9,7 +9,6 @@ import type { DayButton } from "react-day-picker"
 import { getDefaultClassNames } from "react-day-picker"
 import type { Event, Calendar as DbCalendar } from "@/server/schema"
 import { startOfDay, endOfDay, isWithinInterval } from "date-fns"
-import { useCalendarData } from "../contexts/calendar-data-context"
 import { COLOR_MAP } from "@/lib/colors"
 
 
@@ -111,11 +110,9 @@ CustomDayButton.displayName = "CustomDayButton"
 
 export default function SidebarCalendar({ events: propEvents, calendars: propCalendars }: SidebarCalendarProps) {
   const { currentDate, setCurrentDate } = useCalendarStore()
-  const { events: contextEvents, calendars: contextCalendars } = useCalendarData()
-  
-  // Use context data if available, otherwise fall back to props
-  const events = contextEvents.length > 0 ? contextEvents : (propEvents || [])
-  const calendars = contextCalendars.length > 0 ? contextCalendars : (propCalendars || [])
+  // Use props data directly since we're removing context
+  const events = propEvents || []
+  const calendars = propCalendars || []
 
   const CustomDayButtonWithData = React.useCallback(
     (props: React.ComponentProps<typeof DayButton>) => (

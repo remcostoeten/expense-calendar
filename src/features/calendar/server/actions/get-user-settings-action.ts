@@ -1,11 +1,10 @@
 "use server"
 
-import { UserSettingsRepository } from "../repository/user-settings-repository"
+import { getUserSettings } from "../queries/get-user-settings"
 
 export async function getUserSettingsAction(userId: number) {
   try {
-    const repository = new UserSettingsRepository()
-    const settings = await repository.getUserSettings(userId)
+    const settings = await getUserSettings(userId)
     
     return {
       success: true,

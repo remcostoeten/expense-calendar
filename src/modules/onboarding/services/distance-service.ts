@@ -1,5 +1,7 @@
 "use server"
 
+import { env } from "@/server/env"
+
 type TDistanceResult = {
   success: boolean
   distance?: number
@@ -17,12 +19,87 @@ export async function calculateDistance(
   officeAddress: string
 ): Promise<TDistanceResult> {
   try {
-    // For demo purposes, we'll use OpenRouteService (free alternative to Google Maps)
-    // In production, you might want to use Google Maps Distance Matrix API
+    // Try Google Maps Distance Matrix API first (most accurate)
+    const googleResult = await calculateDistanceWithGoogleMaps(homeAddress, officeAddress)
+    if (googleResult.success) {
+      return googleResult
+    }
+
+    // Fallback to OpenRouteService if Google Maps fails
+    const openRouteResult = await calculateDistanceWithOpenRoute(homeAddress, officeAddress)
+    if (openRouteResult.success) {
+      return openRouteResult
+    }
+
+    // Final fallback to straight-line distance
+    return await calculateStraightLineDistance(homeAddress, officeAddress)
+  } catch (error) {
+    console.error("Distance calculation error:", error)
+    return {
+      success: false,
+      error: "Failed to calculate distance. Please try again."
+    }
+  }
+}
+
+async function calculateDistanceWithGoogleMaps(
+  homeAddress: string, 
+  officeAddress: string
+): Promise<TDistanceResult> {
+  try {
+    const API_KEY = env.GOOGLE_MAPS_API_KEY
+    if (!API_KEY) {
+      return { success: false, error: "Google Maps API key not configured" }
+    }
+
+    const origins = encodeURIComponent(homeAddress)
+    const destinations = encodeURIComponent(officeAddress)
+    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origins}&destinations=${destinations}&units=metric&key=${API_KEY}`
+
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Google Maps API failed: ${response.status}`)
+    }
+
+    const data = await response.json()
     
+    if (data.status !== 'OK') {
+      return {
+        success: false,
+        error: `Google Maps API error: ${data.status}`
+      }
+    }
+
+    const element = data.rows[0]?.elements[0]
+    if (!element || element.status !== 'OK') {
+      return {
+        success: false,
+        error: "Could not calculate route between addresses"
+      }
+    }
+
+    return {
+      success: true,
+      distance: Math.round(element.distance.value / 1000 * 100) / 100, // Convert meters to km
+      duration: Math.round(element.duration.value / 60) // Convert seconds to minutes
+    }
+  } catch (error) {
+    console.error("Google Maps API error:", error)
+    return {
+      success: false,
+      error: "Google Maps API failed"
+    }
+  }
+}
+
+async function calculateDistanceWithOpenRoute(
+  homeAddress: string, 
+  officeAddress: string
+): Promise<TDistanceResult> {
+  try {
     // First, geocode the addresses to get coordinates
-    const homeCoords = await geocodeAddress(homeAddress)
-    const officeCoords = await geocodeAddress(officeAddress)
+    const homeCoords = await geocodeAddressWithGoogle(homeAddress)
+    const officeCoords = await geocodeAddressWithGoogle(officeAddress)
     
     if (!homeCoords.success || !officeCoords.success) {
       return {
@@ -32,7 +109,7 @@ export async function calculateDistance(
     }
 
     // Calculate driving distance using OpenRouteService
-    const routeResult = await calculateRoute(homeCoords.coordinates!, officeCoords.coordinates!)
+    const routeResult = await calculateRouteWithOpenRoute(homeCoords.coordinates!, officeCoords.coordinates!)
     
     if (!routeResult.success) {
       return {
@@ -47,21 +124,64 @@ export async function calculateDistance(
       duration: routeResult.duration
     }
   } catch (error) {
-    console.error("Distance calculation error:", error)
+    console.error("OpenRoute calculation error:", error)
     return {
       success: false,
-      error: "Failed to calculate distance. Please try again."
+      error: "OpenRoute API failed"
     }
   }
 }
 
-async function geocodeAddress(address: string): Promise<{
+async function geocodeAddressWithGoogle(address: string): Promise<{
   success: boolean
   coordinates?: TCoordinates
   error?: string
 }> {
   try {
-    // Using Nominatim (OpenStreetMap) for geocoding - free alternative
+    const API_KEY = env.GOOGLE_MAPS_API_KEY
+    if (!API_KEY) {
+      // Fallback to Nominatim if no Google API key
+      return await geocodeAddressWithNominatim(address)
+    }
+
+    const encodedAddress = encodeURIComponent(address)
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${API_KEY}`
+    
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Google Geocoding failed: ${response.status}`)
+    }
+    
+    const data = await response.json()
+    
+    if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+      return {
+        success: false,
+        error: "Address not found"
+      }
+    }
+    
+    const location = data.results[0].geometry.location
+    return {
+      success: true,
+      coordinates: {
+        lat: location.lat,
+        lng: location.lng
+      }
+    }
+  } catch (error) {
+    console.error("Google Geocoding error:", error)
+    // Fallback to Nominatim
+    return await geocodeAddressWithNominatim(address)
+  }
+}
+
+async function geocodeAddressWithNominatim(address: string): Promise<{
+  success: boolean
+  coordinates?: TCoordinates
+  error?: string
+}> {
+  try {
     const encodedAddress = encodeURIComponent(address)
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&countrycodes=nl&limit=1`
     
@@ -92,7 +212,7 @@ async function geocodeAddress(address: string): Promise<{
       }
     }
   } catch (error) {
-    console.error("Geocoding error:", error)
+    console.error("Nominatim Geocoding error:", error)
     return {
       success: false,
       error: "Failed to geocode address"
@@ -100,20 +220,18 @@ async function geocodeAddress(address: string): Promise<{
   }
 }
 
-async function calculateRoute(start: TCoordinates, end: TCoordinates): Promise<{
+async function calculateRouteWithOpenRoute(start: TCoordinates, end: TCoordinates): Promise<{
   success: boolean
   distance?: number
   duration?: number
   error?: string
 }> {
   try {
-    // Using OpenRouteService for routing
-    // You'll need to get a free API key from https://openrouteservice.org/
-    const API_KEY = process.env.OPENROUTE_API_KEY || 'demo-key'
+    const API_KEY = env.OPENROUTE_API_KEY
     
-    if (API_KEY === 'demo-key') {
+    if (!API_KEY) {
       // Fallback to simple straight-line distance calculation when no API key
-      const distance = calculateStraightLineDistance(start, end)
+      const distance = calculateStraightLineDistanceBetweenPoints(start, end)
       return {
         success: true,
         distance: Math.round(distance * 1.3), // Add ~30% for road routing
@@ -137,7 +255,7 @@ async function calculateRoute(start: TCoordinates, end: TCoordinates): Promise<{
     })
     
     if (!response.ok) {
-      throw new Error(`Routing failed: ${response.status}`)
+      throw new Error(`OpenRoute API failed: ${response.status}`)
     }
     
     const data = await response.json()
@@ -159,9 +277,9 @@ async function calculateRoute(start: TCoordinates, end: TCoordinates): Promise<{
       duration: durationMinutes
     }
   } catch (error) {
-    console.error("Route calculation error:", error)
+    console.error("OpenRoute calculation error:", error)
     // Fallback to straight-line distance
-    const distance = calculateStraightLineDistance(start, end)
+    const distance = calculateStraightLineDistanceBetweenPoints(start, end)
     return {
       success: true,
       distance: Math.round(distance * 1.3),
@@ -170,7 +288,42 @@ async function calculateRoute(start: TCoordinates, end: TCoordinates): Promise<{
   }
 }
 
-function calculateStraightLineDistance(point1: TCoordinates, point2: TCoordinates): number {
+async function calculateStraightLineDistance(
+  homeAddress: string, 
+  officeAddress: string
+): Promise<TDistanceResult> {
+  try {
+    // Geocode both addresses to get coordinates
+    const homeCoords = await geocodeAddressWithNominatim(homeAddress)
+    const officeCoords = await geocodeAddressWithNominatim(officeAddress)
+    
+    if (!homeCoords.success || !officeCoords.success) {
+      return {
+        success: false,
+        error: "Could not find one or both addresses for straight-line calculation."
+      }
+    }
+
+    const distance = calculateStraightLineDistanceBetweenPoints(
+      homeCoords.coordinates!, 
+      officeCoords.coordinates!
+    )
+    
+    return {
+      success: true,
+      distance: Math.round(distance * 1.3), // Add ~30% for road routing
+      duration: Math.round(distance * 1.3 / 60 * 60) // Assume 60 km/h average
+    }
+  } catch (error) {
+    console.error("Straight-line calculation error:", error)
+    return {
+      success: false,
+      error: "Failed to calculate straight-line distance"
+    }
+  }
+}
+
+function calculateStraightLineDistanceBetweenPoints(point1: TCoordinates, point2: TCoordinates): number {
   const R = 6371 // Earth's radius in kilometers
   const dLat = (point2.lat - point1.lat) * Math.PI / 180
   const dLon = (point2.lng - point1.lng) * Math.PI / 180

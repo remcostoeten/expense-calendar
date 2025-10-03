@@ -9,12 +9,8 @@ import { DayView } from "./views/day-view"
 import { WeekView } from "./views/week-view"
 import { MonthView } from "./views/month-view"
 import { YearView } from "./views/year-view"
-import { useCurrentTime } from "@/hooks/use-current-time"
-import { useZoom } from "@/hooks/use-zoom"
-import { useTimeSelection } from "@/hooks/use-time-selection"
-import { useEventDragAndDrop } from "@/hooks/use-event-drag-drop"
+import { useCurrentTime, useZoom, useTimeSelection, useEventDragAndDrop } from "../hooks"
 import { CalendarHeader } from "./calendar-header"
-import { useCalendarData } from "../contexts/calendar-data-context"
 import { CalendarCreationModal } from "./calendar-creation-modal"
 
 export type TCalendarEvent = {
@@ -62,7 +58,7 @@ export function EventCalendar({
   const [isCreateCalendarOpen, setIsCreateCalendarOpen] = useState(false)
   const [eventCreationStart, setEventCreationStart] = useState<Date>(new Date())
   const [eventCreationEnd, setEventCreationEnd] = useState<Date>(new Date())
-  const { calendars } = useCalendarData()
+  const { calendars } = useCalendarStore()
   const [isEditingEvent, setIsEditingEvent] = useState(false)
   const [editingEvent, setEditingEvent] = useState<TCalendarEvent | null>(null)
 

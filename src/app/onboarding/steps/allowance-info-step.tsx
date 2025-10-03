@@ -1,27 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import type { TOnboarding } from "../onboarding-flow"
+import type { TStepProps } from "@/modules/onboarding/types"
 
-interface AllowanceInfoStepProps {
-  data: TOnboarding
-  updateData: (updates: Partial<TOnboarding>) => void
-  nextStep: () => void
-  prevStep: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
-  completeOnboarding: () => void
-}
-
-export function AllowanceInfoStep({
-  data,
-  updateData,
-  nextStep
-}: AllowanceInfoStepProps) {
+export function AllowanceInfoStep({ data, updateData, nextStep }: TStepProps) {
   const [kmAllowance, setKmAllowance] = useState<string>(
     data.kmAllowance.toString()
   )
@@ -29,19 +15,17 @@ export function AllowanceInfoStep({
     data.homeOfficeAllowance.toString()
   )
 
-  const handleKmAllowanceChange = (value: string) => {
+  const handleKmAllowanceChange = useCallback(function(value: string) {
     setKmAllowance(value)
-    updateData({
-      kmAllowance: parseFloat(value) || 0
-    })
-  }
+    updateData({ kmAllowance: parseFloat(value) || 0 })
+  }, [updateData])
 
-  const handleHomeOfficeAllowanceChange = (value: string) => {
+  const handleHomeOfficeAllowanceChange = useCallback(function(value: string) {
     setHomeOfficeAllowance(value)
-    updateData({
-      homeOfficeAllowance: parseFloat(value) || 0
-    })
-  }
+    updateData({ homeOfficeAllowance: parseFloat(value) || 0 })
+  }, [updateData])
+
+  const isValid = kmAllowance && homeOfficeAllowance
 
   return (
     <div className="space-y-6">
@@ -114,7 +98,7 @@ export function AllowanceInfoStep({
         <Button 
           onClick={nextStep} 
           className="w-full"
-          disabled={!kmAllowance || !homeOfficeAllowance}
+          disabled={!isValid}
         >
           Continue
         </Button>

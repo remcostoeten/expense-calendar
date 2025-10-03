@@ -51,23 +51,20 @@ export default function RouteMapClient({ homeAddress, officeAddress, onCalculate
   const geocodeAddress = async (address: string): Promise<TCoordinates | null> => {
     try {
       const encodedAddress = encodeURIComponent(address)
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&countrycodes=nl&limit=1`
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'CommuteTracker/1.0'
-        }
-      })
+      const response = await fetch(url)
       
       if (!response.ok) throw new Error("Geocoding failed")
       
-      const results = await response.json()
+      const data = await response.json()
       
-      if (!results || results.length === 0) return null
+      if (data.status !== 'OK' || !data.results || data.results.length === 0) return null
       
+      const location = data.results[0].geometry.location
       return {
-        lat: parseFloat(results[0].lat),
-        lng: parseFloat(results[0].lon)
+        lat: location.lat,
+        lng: location.lng
       }
     } catch (error) {
       console.error("Geocoding error:", error)
@@ -77,11 +74,36 @@ export default function RouteMapClient({ homeAddress, officeAddress, onCalculate
 
   const calculateRoute = async (start: TCoordinates, end: TCoordinates) => {
     try {
-      // Simple straight line for now - you can enhance this with actual routing
-      setRouteCoords([
-        [start.lat, start.lng],
-        [end.lat, end.lng]
-      ])
+      setIsCalculating(true)
+      setError(null)
+      
+      // Use Google Maps Directions API for real routing
+      const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+      if (!API_KEY) {
+        throw new Error("Google Maps API key not configured")
+      }
+
+      const origin = `${start.lat},${start.lng}`
+      const destination = `${end.lat},${end.lng}`
+      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&key=${API_KEY}&mode=driving&traffic_model=best_guess&departure_time=now`
+
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`Directions API failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      if (data.status !== 'OK' || !data.routes || data.routes.length === 0) {
+        throw new Error("No route found")
+      }
+
+      const route = data.routes[0]
+      const path = route.overview_polyline.points
+      
+      // Decode the polyline to get coordinates
+      const coordinates = decodePolyline(path)
+      setRouteCoords(coordinates)
       
       if (onCalculateRoute) {
         onCalculateRoute()
@@ -89,7 +111,48 @@ export default function RouteMapClient({ homeAddress, officeAddress, onCalculate
     } catch (error) {
       console.error("Route calculation error:", error)
       setError("Failed to calculate route")
+    } finally {
+      setIsCalculating(false)
     }
+  }
+
+  // Decode Google Maps polyline
+  const decodePolyline = (encoded: string): [number, number][] => {
+    const points: [number, number][] = []
+    let index = 0
+    let lat = 0
+    let lng = 0
+
+    while (index < encoded.length) {
+      let b: number
+      let shift = 0
+      let result = 0
+      
+      do {
+        b = encoded.charCodeAt(index++) - 63
+        result |= (b & 0x1f) << shift
+        shift += 5
+      } while (b >= 0x20)
+      
+      const dlat = ((result & 1) ? ~(result >> 1) : (result >> 1))
+      lat += dlat
+
+      shift = 0
+      result = 0
+      
+      do {
+        b = encoded.charCodeAt(index++) - 63
+        result |= (b & 0x1f) << shift
+        shift += 5
+      } while (b >= 0x20)
+      
+      const dlng = ((result & 1) ? ~(result >> 1) : (result >> 1))
+      lng += dlng
+
+      points.push([lat / 1e5, lng / 1e5])
+    }
+
+    return points
   }
 
   useEffect(() => {
@@ -135,7 +198,6 @@ export default function RouteMapClient({ homeAddress, officeAddress, onCalculate
     }
   }, [homeAddress, officeAddress])
 
-  // Default center (Netherlands)
   const center: [number, number] = homeCoords 
     ? [homeCoords.lat, homeCoords.lng] 
     : [52.3676, 4.9041] // Amsterdam
@@ -208,9 +270,9 @@ export default function RouteMapClient({ homeAddress, officeAddress, onCalculate
             positions={routeCoords} 
             pathOptions={{
               color: "#3b82f6",
-              weight: 4,
-              opacity: 0.8,
-              dashArray: "10, 5"
+              weight: 5,
+              opacity: 0.9,
+              dashArray: "0" // Solid line for real routes
             }}
           />
         )}
@@ -221,6 +283,15 @@ export default function RouteMapClient({ homeAddress, officeAddress, onCalculate
           🏠 Home • 🏢 Office
         </div>
       </div>
+      
+      {isCalculating && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+            <p className="text-sm text-muted-foreground">Calculating route...</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -27,12 +27,13 @@ export type ReorderCalendarsInput = {
   calendarOrders: Array<{ id: number; sortOrder: number }>
 }
 
-export function useUpdateCalendar(options?: {
+export function useUpdateCalendar(initialCalendars: Calendar[] = [], options?: {
   onSuccess?: (calendar: Calendar) => void
   onError?: (error: string) => void
 }) {
   return useApi<UpdateCalendarInput, Calendar, Calendar[]>({
     action: ({ calendarId, updates }) => updateCalendarAction(calendarId, updates),
+    initialData: initialCalendars,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentCalendars, input) => {
@@ -47,12 +48,13 @@ export function useUpdateCalendar(options?: {
   })
 }
 
-export function useDeleteCalendar(options?: {
+export function useDeleteCalendar(initialCalendars: Calendar[] = [], options?: {
   onSuccess?: () => void
   onError?: (error: string) => void
 }) {
   return useApi<DeleteCalendarInput, void, Calendar[]>({
     action: ({ calendarId }) => deleteCalendarAction(calendarId),
+    initialData: initialCalendars,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentCalendars, input) => {
@@ -63,14 +65,13 @@ export function useDeleteCalendar(options?: {
   })
 }
 
-export function useReorderCalendars(options?: {
+export function useReorderCalendars(initialCalendars: Calendar[] = [], options?: {
   onSuccess?: () => void
   onError?: (error: string) => void
 }) {
-  const [isPending, startTransition] = useTransition()
-
-  const apiHook = useApi<ReorderCalendarsInput, void, Calendar[]>({
+  return useApi<ReorderCalendarsInput, void, Calendar[]>({
     action: ({ calendarOrders }) => reorderCalendarsAction(calendarOrders),
+    initialData: initialCalendars,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentCalendars, input) => {
@@ -88,23 +89,12 @@ export function useReorderCalendars(options?: {
       return reorderedCalendars
     },
   })
-
-  return {
-    execute: (input: ReorderCalendarsInput) => {
-      startTransition(() => {
-        apiHook.execute(input)
-      })
-    },
-    isPending,
-    error: apiHook.error,
-    optimisticData: apiHook.optimisticData,
-  }
 }
 
-export function useCalendarManagement() {
-  const updateCalendar = useUpdateCalendar()
-  const deleteCalendar = useDeleteCalendar()
-  const reorderCalendars = useReorderCalendars()
+export function useCalendarManagement(initialCalendars: Calendar[] = []) {
+  const updateCalendar = useUpdateCalendar(initialCalendars)
+  const deleteCalendar = useDeleteCalendar(initialCalendars)
+  const reorderCalendars = useReorderCalendars(initialCalendars)
 
   return {
     updateCalendar: {

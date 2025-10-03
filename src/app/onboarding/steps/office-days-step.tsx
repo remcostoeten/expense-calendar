@@ -1,37 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import type { TOnboarding } from "../onboarding-flow"
+import { DAYS, WEEKDAYS } from "@/modules/onboarding/constants"
+import type { TStepProps } from "@/modules/onboarding/types"
 
-interface OfficeDaysStepProps {
-  data: TOnboarding
-  updateData: (updates: Partial<TOnboarding>) => void
-  nextStep: () => void
-  prevStep: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
-  completeOnboarding: () => void
-}
-
-const DAYS = [
-  { id: 1, name: 'Monday', short: 'Mo' },
-  { id: 2, name: 'Tuesday', short: 'Tu' },
-  { id: 3, name: 'Wednesday', short: 'We' },
-  { id: 4, name: 'Thursday', short: 'Th' },
-  { id: 5, name: 'Friday', short: 'Fr' },
-  { id: 6, name: 'Saturday', short: 'Sa' },
-  { id: 0, name: 'Sunday', short: 'Su' },
-]
-
-export function OfficeDaysStep({
-  data,
-  updateData,
-  nextStep
-}: OfficeDaysStepProps) {
+export function OfficeDaysStep({ data, updateData, nextStep }: TStepProps) {
   const [hasFixedOfficeDays, setHasFixedOfficeDays] = useState<boolean>(
     data.hasFixedOfficeDays
   )
@@ -39,7 +16,7 @@ export function OfficeDaysStep({
     data.fixedOfficeDays || []
   )
 
-  const handleFixedDaysChange = (value: string) => {
+  const handleFixedDaysChange = useCallback(function(value: string) {
     const hasFixed = value === 'yes'
     setHasFixedOfficeDays(hasFixed)
     
@@ -51,33 +28,32 @@ export function OfficeDaysStep({
       hasFixedOfficeDays: hasFixed,
       fixedOfficeDays: hasFixed ? selectedDays : []
     })
-  }
+  }, [selectedDays, updateData])
 
-  const toggleDay = (dayId: number) => {
-    const newSelectedDays = selectedDays.includes(dayId)
-      ? selectedDays.filter(id => id !== dayId)
-      : [...selectedDays, dayId]
-    
-    setSelectedDays(newSelectedDays)
-    updateData({
-      fixedOfficeDays: newSelectedDays
+  const toggleDay = useCallback(function(dayId: number) {
+    setSelectedDays(prev => {
+      const newSelectedDays = prev.includes(dayId)
+        ? prev.filter(id => id !== dayId)
+        : [...prev, dayId]
+      
+      updateData({ fixedOfficeDays: newSelectedDays })
+      return newSelectedDays
     })
-  }
+  }, [updateData])
 
-  const selectWeekdays = () => {
-    const weekdays = [1, 2, 3, 4, 5] // Monday to Friday
-    setSelectedDays(weekdays)
-    updateData({
-      fixedOfficeDays: weekdays
-    })
-  }
+  const selectWeekdays = useCallback(function() {
+    setSelectedDays(WEEKDAYS)
+    updateData({ fixedOfficeDays: WEEKDAYS })
+  }, [updateData])
 
-  const clearSelection = () => {
+  const clearSelection = useCallback(function() {
     setSelectedDays([])
-    updateData({
-      fixedOfficeDays: []
-    })
-  }
+    updateData({ fixedOfficeDays: [] })
+  }, [updateData])
+
+  const selectedDayNames = useMemo(function() {
+    return selectedDays.map(id => DAYS.find(d => d.id === id)?.name).join(', ')
+  }, [selectedDays])
 
   return (
     <div className="space-y-6">
@@ -152,7 +128,7 @@ export function OfficeDaysStep({
               </div>
               
               <div className="grid grid-cols-7 gap-2">
-                {DAYS.map((day) => {
+                {DAYS.map(function(day) {
                   const isSelected = selectedDays.includes(day.id)
                   return (
                     <Button
@@ -172,7 +148,7 @@ export function OfficeDaysStep({
 
               {selectedDays.length > 0 && (
                 <div className="text-sm text-muted-foreground">
-                  <p>Selected days: {selectedDays.map(id => DAYS.find(d => d.id === id)?.name).join(', ')}</p>
+                  <p>Selected days: {selectedDayNames}</p>
                 </div>
               )}
             </div>
@@ -181,10 +157,7 @@ export function OfficeDaysStep({
       </Card>
 
       <div className="pt-4">
-        <Button 
-          onClick={nextStep} 
-          className="w-full"
-        >
+        <Button onClick={nextStep} className="w-full">
           Continue
         </Button>
       </div>

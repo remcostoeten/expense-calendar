@@ -8,7 +8,7 @@ type TCommuteProfile = typeof commuteProfiles.$inferInsert
 
 export async function createCommuteProfile(
   userId: string,
-  onboardingData: OnboardingData
+  onboardingData: TOnboarding
 ): Promise<TCommuteProfile> {
   const profileData: TCommuteProfile = {
     userId,

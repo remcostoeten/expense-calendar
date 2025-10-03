@@ -8,6 +8,7 @@ export const env = createEnv({
         GOOGLE_CLIENT_ID: z.string().min(1),
         GOOGLE_CLIENT_SECRET: z.string().min(1),
         GOOGLE_MAPS_API_KEY: z.string().min(1),
+        OPENROUTE_API_KEY: z.string().min(1),
         OUTLOOK_CLIENT_ID: z.string().min(1),
         OUTLOOK_CLIENT_SECRET: z.string().min(1)
     },
@@ -22,6 +23,7 @@ export const env = createEnv({
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
         GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
+        OPENROUTE_API_KEY: process.env.OPENROUTE_API_KEY,
         OUTLOOK_CLIENT_ID: process.env.OUTLOOK_CLIENT_ID,
         OUTLOOK_CLIENT_SECRET: process.env.OUTLOOK_CLIENT_SECRET,
         NEXT_PUBLIC_STACK_PROJECT_ID: process.env.NEXT_PUBLIC_STACK_PROJECT_ID,

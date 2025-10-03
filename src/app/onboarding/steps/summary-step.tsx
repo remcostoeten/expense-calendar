@@ -1,31 +1,13 @@
 "use client"
 
+import { useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Car, Bus, Footprints, Bike, MapPin, Calendar, Euro } from "lucide-react"
-import type { TOnboarding } from "../onboarding-flow"
-
-type TProps = { 
-  data: TOnboarding
-  updateData: (updates: Partial<TOnboarding>) => void
-  nextStep: () => void
-  prevStep: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
-  completeOnboarding: () => void
-}
-
-const DAYS = [
-  { id: 0, name: 'Sunday', short: 'Su' },
-  { id: 1, name: 'Monday', short: 'Mo' },
-  { id: 2, name: 'Tuesday', short: 'Tu' },
-  { id: 3, name: 'Wednesday', short: 'We' },
-  { id: 4, name: 'Thursday', short: 'Th' },
-  { id: 5, name: 'Friday', short: 'Fr' },
-  { id: 6, name: 'Saturday', short: 'Sa' },
-]
+import { DAYS } from "@/modules/onboarding/constants"
+import type { TStepProps } from "@/modules/onboarding/types"
 
 const COMMUTE_METHOD_ICONS = {
   car: Car,
@@ -34,32 +16,43 @@ const COMMUTE_METHOD_ICONS = {
   bike: Bike,
 }
 
-export function SummaryStep({
-  data,
-  completeOnboarding
-}: TProps) {
-  const CommuteIcon = COMMUTE_METHOD_ICONS[data.commuteMethod]
-  const commuteMethodName = data.commuteMethod.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+function formatCommuteMethodName(method: string): string {
+  return method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
 
-  const calculateWeeklyAllowance = () => {
-    let weeklyAllowance = 0
+function getDayNames(dayIds: number[]): string {
+  return dayIds.map(id => DAYS.find(d => d.id === id)?.name).join(', ')
+}
+
+export function SummaryStep({ data, completeOnboarding }: TStepProps) {
+  const CommuteIcon = COMMUTE_METHOD_ICONS[data.commuteMethod]
+  const commuteMethodName = formatCommuteMethodName(data.commuteMethod)
+
+  const weeklyAllowance = useMemo(function() {
+    let total = 0
 
     if (data.hasFixedOfficeDays) {
       const officeDaysCount = data.fixedOfficeDays.length
       const kmAllowance = officeDaysCount * 2 * parseFloat(data.distanceKm?.toString() || '0') * data.kmAllowance
-      weeklyAllowance += kmAllowance
+      total += kmAllowance
     }
 
     if (data.hasHomeOfficeAllowance) {
       const homeOfficeDaysCount = data.homeOfficeDays.length
       const homeOfficeAllowance = homeOfficeDaysCount * data.homeOfficeAllowance
-      weeklyAllowance += homeOfficeAllowance
+      total += homeOfficeAllowance
     }
 
-    return weeklyAllowance
-  }
+    return total
+  }, [data])
 
-  const weeklyAllowance = calculateWeeklyAllowance()
+  const officeDayNames = useMemo(function() {
+    return getDayNames(data.fixedOfficeDays)
+  }, [data.fixedOfficeDays])
+
+  const homeOfficeDayNames = useMemo(function() {
+    return getDayNames(data.homeOfficeDays)
+  }, [data.homeOfficeDays])
 
   return (
     <div className="space-y-6">
@@ -103,7 +96,6 @@ export function SummaryStep({
           </CardContent>
         </Card>
 
-        {/* Addresses */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -121,15 +113,16 @@ export function SummaryStep({
               <p className="text-sm font-medium text-muted-foreground">Office</p>
               <p className="font-medium">{data.officeAddress}</p>
             </div>
-            <div className="bg-muted p-3 rounded-lg">
-              <p className="text-sm font-medium">
-                Distance: {data.distanceKm} km
-              </p>
-            </div>
+            {data.distanceKm && (
+              <div className="bg-muted p-3 rounded-lg">
+                <p className="text-sm font-medium">
+                  Distance: {data.distanceKm} km
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Office Days */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -141,8 +134,8 @@ export function SummaryStep({
             {data.hasFixedOfficeDays ? (
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Fixed office days:</p>
-                <div className="flex gap-1">
-                  {data.fixedOfficeDays.map(dayId => {
+                <div className="flex gap-1 flex-wrap">
+                  {data.fixedOfficeDays.map(function(dayId) {
                     const day = DAYS.find(d => d.id === dayId)
                     return (
                       <Badge key={dayId} variant="default">
@@ -151,6 +144,7 @@ export function SummaryStep({
                     )
                   })}
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">{officeDayNames}</p>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -160,7 +154,6 @@ export function SummaryStep({
           </CardContent>
         </Card>
 
-        {/* Home Office */}
         {data.hasHomeOfficeAllowance && (
           <Card>
             <CardHeader>
@@ -172,8 +165,8 @@ export function SummaryStep({
             <CardContent>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">Home office days:</p>
-                <div className="flex gap-1">
-                  {data.homeOfficeDays.map(dayId => {
+                <div className="flex gap-1 flex-wrap">
+                  {data.homeOfficeDays.map(function(dayId) {
                     const day = DAYS.find(d => d.id === dayId)
                     return (
                       <Badge key={dayId} variant="outline">
@@ -182,8 +175,9 @@ export function SummaryStep({
                     )
                   })}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  €{data.homeOfficeAllowance} per day
+                <p className="text-xs text-muted-foreground">{homeOfficeDayNames}</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  €{data.homeOfficeAllowance.toFixed(2)} per day
                 </p>
               </div>
             </CardContent>

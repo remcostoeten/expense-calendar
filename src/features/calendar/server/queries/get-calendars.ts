@@ -7,7 +7,7 @@ export async function getCalendars(userId: number) {
     .select()
     .from(calendars)
     .where(eq(calendars.userId, userId))
-    .orderBy(calendars.createdAt)
+    .orderBy(calendars.sortOrder, calendars.createdAt)
 
   return userCalendars
 }

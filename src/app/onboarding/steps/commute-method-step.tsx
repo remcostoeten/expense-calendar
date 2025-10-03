@@ -1,79 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Car, Bus, Footprints, Bike } from "lucide-react"
-import type { TOnboarding } from "../onboarding-flow"
+import { COMMUTE_METHODS } from "@/modules/onboarding/constants"
+import type { TStepProps } from "@/modules/onboarding/types"
 
-interface CommuteMethodStepProps {
-  data: TOnboarding
-  updateData: (updates: Partial<TOnboarding>) => void
-  nextStep: () => void
-  prevStep: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
-  completeOnboarding: () => void
-}
-
-const COMMUTE_METHODS = [
-  {
-    id: 'car' as const,
-    name: 'Car',
-    icon: Car,
-    description: '€0.23 per km allowance',
-    defaultAllowance: 0.23
-  },
-  {
-    id: 'public_transport' as const,
-    name: 'Public Transport',
-    icon: Bus,
-    description: 'Monthly subscription cost',
-    defaultAllowance: 0
-  },
-  {
-    id: 'walking' as const,
-    name: 'Walking',
-    icon: Footprints,
-    description: '€0 per km (no allowance)',
-    defaultAllowance: 0
-  },
-  {
-    id: 'bike' as const,
-    name: 'Bike',
-    icon: Bike,
-    description: '€0 per km (no allowance)',
-    defaultAllowance: 0
-  }
-]
-
-export function CommuteMethodStep({
-  data,
-  updateData,
-  nextStep
-}: CommuteMethodStepProps) {
+export function CommuteMethodStep({ data, updateData, nextStep }: TStepProps) {
   const [publicTransportCost, setPublicTransportCost] = useState<string>(
     data.publicTransportCost?.toString() || '0'
   )
 
-  const handleMethodSelect = (method: typeof COMMUTE_METHODS[0]) => {
+  const handleMethodSelect = useCallback(function(method: typeof COMMUTE_METHODS[0]) {
     updateData({
       commuteMethod: method.id,
       kmAllowance: method.defaultAllowance,
       publicTransportCost: method.id === 'public_transport' ? parseFloat(publicTransportCost) : undefined
     })
-  }
+  }, [publicTransportCost, updateData])
 
-  const handlePublicTransportCostChange = (value: string) => {
+  const handlePublicTransportCostChange = useCallback(function(value: string) {
     setPublicTransportCost(value)
     if (data.commuteMethod === 'public_transport') {
-      updateData({
-        publicTransportCost: parseFloat(value) || 0
-      })
+      updateData({ publicTransportCost: parseFloat(value) || 0 })
     }
-  }
+  }, [data.commuteMethod, updateData])
+
+  const showPublicTransportInput = data.commuteMethod === 'public_transport'
 
   return (
     <div className="space-y-6">
@@ -85,7 +40,7 @@ export function CommuteMethodStep({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {COMMUTE_METHODS.map((method) => {
+        {COMMUTE_METHODS.map(function(method) {
           const Icon = method.icon
           const isSelected = data.commuteMethod === method.id
 
@@ -115,7 +70,7 @@ export function CommuteMethodStep({
         })}
       </div>
 
-      {data.commuteMethod === 'public_transport' && (
+      {showPublicTransportInput && (
         <div className="space-y-2">
           <Label htmlFor="public-transport-cost">Monthly subscription cost (€)</Label>
           <Input
