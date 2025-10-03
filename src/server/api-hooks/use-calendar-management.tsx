@@ -3,7 +3,7 @@
 import { useTransition } from "react"
 import { useApi } from "@/hooks/use-api"
 import { updateCalendarAction, deleteCalendarAction, reorderCalendarsAction } from "@/features/calendar/server/actions/calendar-management-actions"
-import type { Calendar } from "@/server/schema"
+import type { TCalendar } from "@/server/schema"
 
 /**
  * Calendar management hooks for updating, deleting, and reordering calendars
@@ -28,10 +28,10 @@ export type ReorderCalendarsInput = {
 }
 
 export function useUpdateCalendar(options?: {
-  onSuccess?: (calendar: Calendar) => void
+  onSuccess?: (calendar: TCalendar) => void
   onError?: (error: string) => void
 }) {
-  return useApi<UpdateCalendarInput, Calendar, Calendar[]>({
+  return useApi<UpdateCalendarInput, TCalendar, TCalendar[]>({
     action: ({ calendarId, updates }) => updateCalendarAction(calendarId, updates),
     onSuccess: options?.onSuccess,
     onError: options?.onError,
@@ -51,7 +51,7 @@ export function useDeleteCalendar(options?: {
   onSuccess?: () => void
   onError?: (error: string) => void
 }) {
-  return useApi<DeleteCalendarInput, void, Calendar[]>({
+  return useApi<DeleteCalendarInput, void, TCalendar[]>({
     action: ({ calendarId }) => deleteCalendarAction(calendarId),
     onSuccess: options?.onSuccess,
     onError: options?.onError,
@@ -69,7 +69,7 @@ export function useReorderCalendars(options?: {
 }) {
   const [isPending, startTransition] = useTransition()
 
-  const apiHook = useApi<ReorderCalendarsInput, void, Calendar[]>({
+  const apiHook = useApi<ReorderCalendarsInput, void, TCalendar[]>({
     action: ({ calendarOrders }) => reorderCalendarsAction(calendarOrders),
     onSuccess: options?.onSuccess,
     onError: options?.onError,

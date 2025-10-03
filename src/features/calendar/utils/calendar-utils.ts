@@ -1,6 +1,6 @@
 import { startOfDay, endOfDay, isWithinInterval } from "date-fns"
 import type { TCalendarEvent } from "../components/event-calendar"
-import type { Calendar as DbCalendar } from "@/server/schema"
+import type { TCalendar as DbCalendar } from "@/server/schema"
 import type { Calendar as StoreCalendar } from "@/stores/calendar-store"
 import { getColorClasses } from "@/lib/colors"
 

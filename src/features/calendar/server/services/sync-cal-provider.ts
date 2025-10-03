@@ -1,20 +1,21 @@
 "use server"
 
-import { Event } from "@/server/schema"
+import { TEvent } from "@/server/schema"
 import { db } from "@/server/db"
+import { events, eventIntegrations } from "@/server/schema"
 import { syncOutlookEvent, fetchOutlookEvents } from "./providers/outlook"
 import { syncGoogleEvent, fetchGoogleEvents } from "./providers/google"
 import { syncAppleEvent, fetchAppleEvents } from "./providers/apple"
 import { syncLogger } from "./sync-logger"
 
 // Type for external events that include provider info
-type ExternalEvent = Event & {
+type ExternalEvent = TEvent & {
   externalId: string
   provider: string
 }
 
 // This function is called AFTER a local DB event is created/updated/deleted
-export async function syncOutToProvider(userId: number, event: Event, action: "create" | "update" | "delete") {
+export async function syncOutToProvider(userId: number, event: TEvent, action: "create" | "update" | "delete") {
   syncLogger.info("syncOutToProvider", "system", userId, `Starting ${action} sync for event ${event.id}`)
 
   try {
@@ -72,7 +73,7 @@ export async function syncOutToProvider(userId: number, event: Event, action: "c
 }
 
 // This pulls fresh events from providers and upserts them locally
-export async function syncInFromProvider(userId: number): Promise<Event[]> {
+export async function syncInFromProvider(userId: number): Promise<TEvent[]> {
   syncLogger.info("syncInFromProvider", "system", userId, "Starting sync in from all providers")
 
   try {
@@ -128,7 +129,7 @@ export async function syncInFromProvider(userId: number): Promise<Event[]> {
     syncLogger.info("syncInFromProvider", "system", userId, `Total events fetched: ${totalFetched}`)
 
     // Upsert into local DB
-    const insertedEvents: Event[] = []
+    const insertedEvents: TEvent[] = []
 
     for (const externalEvent of allExternalEvents) {
       try {

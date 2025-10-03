@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useUser } from '@stackframe/stack'
-import { checkOnboardingStatus } from "@/modules/onboarding/server/actions"
+import { checkOnboardingStatusAction } from "@/modules/onboarding/server/actions"
+
+export const dynamic = 'force-dynamic'
 
 export default function HomePage() {
   const router = useRouter()
@@ -18,9 +20,9 @@ export default function HomePage() {
       }
 
       try {
-        const result = await checkOnboardingStatus(user.id)
+        const result = await checkOnboardingStatusAction(user.id)
         
-        if (!result.success || !result.completed) {
+        if (!result.success || !result.isCompleted) {
           router.push("/onboarding")
         } else {
           router.push("/dashboard/calendar")

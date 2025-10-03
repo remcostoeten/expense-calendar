@@ -9,12 +9,12 @@ import { Calendar, MapPin, Clock, Euro, Plus, Route, BarChart3 } from "lucide-re
 import { TripTemplateForm } from "@/modules/commute/components/trip-template-form"
 import { TripAnalyticsDashboard } from "@/modules/commute/components/trip-analytics-dashboard"
 import { useCommuteManagement } from "@/server/api-hooks"
-import type { TripTemplate, CommuteTrip } from "@/server/schema"
+import type { TTripTemplate, TCommuteTrip } from "@/server/schema"
 
 export function TripsDashboard() {
   const { getTripTemplates, getCommuteTrips, isLoading } = useCommuteManagement()
-  const [templates, setTemplates] = useState<TripTemplate[]>([])
-  const [recentTrips, setRecentTrips] = useState<Array<{ trip: CommuteTrip; template?: TripTemplate }>>([])
+  const [templates, setTemplates] = useState<TTripTemplate[]>([])
+  const [recentTrips, setRecentTrips] = useState<Array<{ trip: TCommuteTrip; template?: TTripTemplate }>>([])
   const [showTemplateForm, setShowTemplateForm] = useState(false)
 
   useEffect(() => {

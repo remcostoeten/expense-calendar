@@ -5,7 +5,7 @@ import { createTripTemplateAction } from "@/modules/commute/server/actions/creat
 import { createCommuteTripAction } from "@/modules/commute/server/actions/create-commute-trip-action"
 import { getTripTemplatesAction } from "@/modules/commute/server/actions/get-trip-templates-action"
 import { getCommuteTripsAction, getCommuteTripsForPeriodAction } from "@/modules/commute/server/actions/get-commute-trips-action"
-import type { TripTemplate, CommuteTrip } from "@/server/schema"
+import type { TTripTemplate, TCommuteTrip } from "@/server/schema"
 
 export function useCommuteManagement() {
   const [isLoading, setIsLoading] = useState(false)

@@ -1,11 +1,11 @@
-import { Event, UserIntegration } from "@/server/schema"
+import { TEvent, TUserIntegration } from "@/server/schema"
 import { db } from "@/server/db"
 import { mapExternalCalendarToLocal } from "../calendar-mapping"
 import { getExternalId, storeExternalId, removeExternalId } from "../event-integration-utils"
 
 // Apple Calendar uses CalDAV protocol
 // This is a simplified implementation - in production you'd use a CalDAV library
-export async function syncAppleEvent(integration: UserIntegration, event: Event, action: "create" | "update" | "delete") {
+export async function syncAppleEvent(integration: TUserIntegration, event: TEvent, action: "create" | "update" | "delete") {
   // Apple Calendar sync via CalDAV
   const calDavUrl = "https://caldav.icloud.com" // or user's custom CalDAV server
 
@@ -58,7 +58,7 @@ export async function syncAppleEvent(integration: UserIntegration, event: Event,
   }
 }
 
-export async function fetchAppleEvents(integration: UserIntegration): Promise<Array<Event & { externalId: string; provider: string }>> {
+export async function fetchAppleEvents(integration: TUserIntegration): Promise<Array<TEvent & { externalId: string; provider: string }>> {
   // Fetch events from CalDAV server
   const calDavUrl = "https://caldav.icloud.com" // or user's custom CalDAV server
 
@@ -110,7 +110,7 @@ export async function fetchAppleEvents(integration: UserIntegration): Promise<Ar
 }
 
 // Helper function to create VEVENT format
-function createVEvent(event: Event): string {
+function createVEvent(event: TEvent): string {
   const now = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
   const startTime = event.startTime.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
   const endTime = event.endTime.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
@@ -131,10 +131,10 @@ END:VCALENDAR`
 }
 
 // Helper function to parse CalDAV XML response
-function parseCalDavResponse(xmlData: string, userId: number, calendarId: number): Array<Event & { externalId: string; provider: string }> {
+function parseCalDavResponse(xmlData: string, userId: number, calendarId: number): Array<TEvent & { externalId: string; provider: string }> {
   // This is a very simplified parser
   // In production, use a proper XML/iCal parsing library like node-ical
-  const events: Array<Event & { externalId: string; provider: string }> = []
+  const events: Array<TEvent & { externalId: string; provider: string }> = []
 
   // Extract VEVENT blocks from XML
   const veventRegex = /BEGIN:VEVENT([\s\S]*?)END:VEVENT/g

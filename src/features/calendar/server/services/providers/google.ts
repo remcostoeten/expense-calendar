@@ -1,10 +1,10 @@
-import { Event, UserIntegration } from "@/server/schema"
+import { TEvent, TUserIntegration } from "@/server/schema"
 import { db } from "@/server/db"
 import { google } from "googleapis"
 import { mapExternalCalendarToLocal } from "../calendar-mapping"
 import { getExternalId, storeExternalId, removeExternalId } from "../event-integration-utils"
 
-export async function syncGoogleEvent(integration: UserIntegration, event: Event, action: "create" | "update" | "delete") {
+export async function syncGoogleEvent(integration: TUserIntegration, event: TEvent, action: "create" | "update" | "delete") {
   const auth = new google.auth.OAuth2()
   auth.setCredentials({
     access_token: integration.accessToken,
@@ -79,7 +79,7 @@ export async function syncGoogleEvent(integration: UserIntegration, event: Event
   }
 }
 
-export async function fetchGoogleEvents(integration: UserIntegration): Promise<Array<Event & { externalId: string; provider: string }>> {
+export async function fetchGoogleEvents(integration: TUserIntegration): Promise<Array<TEvent & { externalId: string; provider: string }>> {
   const auth = new google.auth.OAuth2()
   auth.setCredentials({
     access_token: integration.accessToken,

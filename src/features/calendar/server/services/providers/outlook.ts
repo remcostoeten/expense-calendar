@@ -1,10 +1,10 @@
-import { Event, UserIntegration } from "@/server/schema"
+import { TEvent, TUserIntegration } from "@/server/schema"
 import { db } from "@/server/db"
 import { Client } from "@microsoft/microsoft-graph-client"
 import { mapExternalCalendarToLocal } from "../calendar-mapping"
 import { getExternalId, storeExternalId, removeExternalId } from "../event-integration-utils"
 
-export async function syncOutlookEvent(integration: UserIntegration, event: Event, action: "create" | "update" | "delete") {
+export async function syncOutlookEvent(integration: TUserIntegration, event: TEvent, action: "create" | "update" | "delete") {
     const client = Client.init({
         authProvider: (done) => done(null, integration.accessToken),
     })
@@ -53,7 +53,7 @@ export async function syncOutlookEvent(integration: UserIntegration, event: Even
     }
 }
 
-export async function fetchOutlookEvents(integration: UserIntegration): Promise<Array<Event & { externalId: string; provider: string }>> {
+export async function fetchOutlookEvents(integration: TUserIntegration): Promise<Array<TEvent & { externalId: string; provider: string }>> {
     const client = Client.init({
         authProvider: (done) => done(null, integration.accessToken),
     })

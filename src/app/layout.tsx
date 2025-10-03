@@ -12,6 +12,8 @@ export const metadata: Metadata = {
     description: 'Get a grip on your work commute'
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function RootLayout({
     children
 }: Readonly<{

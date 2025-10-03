@@ -2,11 +2,10 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useUser } from '@stackframe/stack'
+import { useUser } from "@stackframe/stack"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { useToast } from "@/hooks/use-toast"
 import { completeOnboardingAction } from "@/modules/onboarding/server/actions"
 import { clearOnboardingCache } from "@/components/auth/onboarding-guard"
 import { CommuteMethodStep } from "./steps/commute-method-step"
@@ -15,6 +14,7 @@ import { AddressesStep } from "./steps/addresses-step"
 import { OfficeDaysStep } from "./steps/office-days-step"
 import { HomeOfficeStep } from "./steps/home-office-step"
 import { SummaryStep } from "./steps/summary-step"
+import { toast } from "sonner"
 
 
 export type TOnboarding = {
@@ -51,7 +51,6 @@ const STEPS = [
 export default function OnboardingFlow() {
   const user = useUser()
   const router = useRouter()
-  const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(0)
   const [isCompleting, setIsCompleting] = useState(false)
   const [data, setData] = useState<TOnboarding>({
@@ -72,7 +71,7 @@ export default function OnboardingFlow() {
     homeOfficeDays: [],
   })
 
-  const updateData = (updates: Partial<TOnboarding>) => {
+  function updateData(updates: Partial<TOnboarding>) {
     setData(prev => ({ ...prev, ...updates }))
   }
 
@@ -90,11 +89,7 @@ export default function OnboardingFlow() {
 
   async function completeOnboarding() {
     if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to complete onboarding.",
-        variant: "destructive",
-      })
+      toast.error("You must be logged in to complete onboarding.")
       return
     }
 
@@ -104,27 +99,15 @@ export default function OnboardingFlow() {
       const result = await completeOnboardingAction(user.id, data)
       
       if (result.success) {
-        // Clear the cache so the next page load is fresh
         clearOnboardingCache(user.id)
-        toast({
-          title: "Success",
-          description: "Onboarding completed successfully! Welcome to Comutorino.",
-        })
+        toast.success("Onboarding completed successfully! Welcome to Comutorino.")
         router.push('/dashboard/calendar')
       } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to complete onboarding. Please try again.",
-          variant: "destructive",
-        })
+        toast.error(result.error || "Failed to complete onboarding. Please try again.")
       }
     } catch (error) {
       console.error('Error completing onboarding:', error)
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      })
+      toast.error("An unexpected error occurred. Please try again.")
     } finally {
       setIsCompleting(false)
     }
@@ -141,7 +124,7 @@ export default function OnboardingFlow() {
   const progress = ((currentStep + 1) / STEPS.length) * 100
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-8">
+    <div className="min-h-screen py-8">
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
@@ -156,7 +139,6 @@ export default function OnboardingFlow() {
           <h1 className="text-xl font-semibold mt-2">{currentStepData.title}</h1>
         </div>
 
-        {/* Step Content */}
         <Card>
           <CardContent className="p-6">
             <StepComponent
@@ -171,7 +153,6 @@ export default function OnboardingFlow() {
           </CardContent>
         </Card>
 
-        {/* Navigation */}
         <div className="flex justify-between mt-6">
           <Button
             variant="outline"

@@ -7,7 +7,7 @@ import { useCalendarStore } from "@/stores/calendar-store"
 import { cn } from "@/lib/utils"
 import type { DayButton } from "react-day-picker"
 import { getDefaultClassNames } from "react-day-picker"
-import type { Event, Calendar as DbCalendar } from "@/server/schema"
+import type { TEvent, TCalendar as DbCalendar } from "@/server/schema"
 import { startOfDay, endOfDay, isWithinInterval } from "date-fns"
 import { useCalendarData } from "../contexts/calendar-data-context"
 import { COLOR_MAP } from "@/lib/colors"
@@ -15,12 +15,12 @@ import { COLOR_MAP } from "@/lib/colors"
 
 
 interface SidebarCalendarProps {
-  events?: Event[]
+  events?: TEvent[]
   calendars?: DbCalendar[]
 }
 
 const CustomDayButton = React.forwardRef<HTMLButtonElement, React.ComponentProps<typeof DayButton> & {
-  events: Event[]
+  events: TEvent[]
   calendars: DbCalendar[]
 }>(
   ({ day, modifiers, className, events, calendars, ...props }, forwardedRef) => {

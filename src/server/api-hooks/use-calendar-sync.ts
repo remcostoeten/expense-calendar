@@ -4,6 +4,7 @@ import { useCalendarStore } from "@/stores/calendar-store"
 import { getCalendarsAction } from "@/features/calendar/server/actions/get-calendars-action"
 import { convertDbCalendarsToStore } from "@/features/calendar/utils/calendar-utils"
 import { syncInFromProvider } from "@/features/calendar/server/services/sync-cal-provider"
+import type { TCalendar } from "@/server/schema"
 
 export function useCalendarSync(userId: number) {
   const { setCalendars } = useCalendarStore()

@@ -5,7 +5,7 @@ import { createEventAction } from "@/features/calendar/server/actions/create-eve
 import { updateEventAction } from "@/features/calendar/server/actions/update-event-action"
 import { deleteEventAction } from "@/features/calendar/server/actions/delete-event-action"
 import { createCalendarAction } from "@/features/calendar/server/actions/create-calendar-action"
-import type { Event, Calendar } from "@/server/schema"
+import type { TEvent, TCalendar } from "@/server/schema"
 
 /**
  * Calendar hook for managing calendar events with optimistic updates.
@@ -107,17 +107,17 @@ export type CreateCalendarInput = {
 }
 
 export function useCreateEvent(options?: {
-  onSuccess?: (event: Event) => void
+  onSuccess?: (event: TEvent) => void
   onError?: (error: string) => void
 }) {
-  return useApi<CreateEventInput, Event, Event[]>({
+  return useApi<CreateEventInput, TEvent, TEvent[]>({
     action: createEventAction,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentEvents, input) => {
       if (!currentEvents) return currentEvents
 
-      const optimisticEvent: Event = {
+      const optimisticEvent: TEvent = {
         id: Date.now(),
         calendarId: input.calendarId,
         userId: input.userId,
@@ -127,6 +127,7 @@ export function useCreateEvent(options?: {
         endTime: input.endTime,
         location: input.location || null,
         allDay: input.allDay || false,
+        recurrenceRule: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       }
@@ -137,10 +138,10 @@ export function useCreateEvent(options?: {
 }
 
 export function useUpdateEvent(options?: {
-  onSuccess?: (event: Event) => void
+  onSuccess?: (event: TEvent) => void
   onError?: (error: string) => void
 }) {
-  return useApi<UpdateEventInput, Event, Event[]>({
+  return useApi<UpdateEventInput, TEvent, TEvent[]>({
     action: (input) => updateEventAction(input.eventId, input.data),
     onSuccess: options?.onSuccess,
     onError: options?.onError,
@@ -158,7 +159,7 @@ export function useDeleteEvent(options?: {
   onSuccess?: () => void
   onError?: (error: string) => void
 }) {
-  return useApi<DeleteEventInput, void, Event[]>({
+  return useApi<DeleteEventInput, void, TEvent[]>({
     action: (input) => deleteEventAction(input.eventId),
     onSuccess: options?.onSuccess,
     onError: options?.onError,
@@ -171,17 +172,17 @@ export function useDeleteEvent(options?: {
 }
 
 export function useCreateCalendar(options?: {
-  onSuccess?: (calendar: Calendar) => void
+  onSuccess?: (calendar: TCalendar) => void
   onError?: (error: string) => void
 }) {
-  return useApi<CreateCalendarInput, Calendar, Calendar[]>({
+  return useApi<CreateCalendarInput, TCalendar, TCalendar[]>({
     action: createCalendarAction,
     onSuccess: options?.onSuccess,
     onError: options?.onError,
     optimisticUpdate: (currentCalendars, input) => {
       if (!currentCalendars) return currentCalendars
 
-      const optimisticCalendar: Calendar = {
+      const optimisticCalendar: TCalendar = {
         id: Date.now(),
         userId: input.userId,
         name: input.name,

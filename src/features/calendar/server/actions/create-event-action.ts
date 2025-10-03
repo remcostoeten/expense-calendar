@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { createEvent } from "../mutations/create-event"
 import { syncOutToProvider } from "../services/sync-cal-provider"
-import type { Event } from "@/server/schema"
+import type { TEvent } from "@/server/schema"
 
 export async function createEventAction(data: {
   calendarId: number
@@ -17,7 +17,7 @@ export async function createEventAction(data: {
 }) {
   try {
     // 1️⃣ Insert into your DB (existing logic)
-    const event: Event = await createEvent({
+    const event: TEvent = await createEvent({
       calendarId: data.calendarId,
       userId: data.userId,
       title: data.title,

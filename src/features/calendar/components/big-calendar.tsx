@@ -8,7 +8,7 @@ import { CalendarShell } from "./calendar-shell"
 import { useCalendar } from "@/server/api-hooks/use-calendar"
 import { useCalendarSync } from "@/server/api-hooks/use-calendar-sync"
 import { useCalendarData } from "../contexts/calendar-data-context"
-import type { Event, Calendar } from "@/server/schema"
+import type { TEvent, TCalendar } from "@/server/schema"
 import { COLOR_MAP } from "@/lib/colors"
 
 
@@ -18,7 +18,7 @@ type TProps = {
 
 
 
-function mapEventToCalendarEvent(event: Event, calendars: Calendar[]): TCalendarEvent {
+function mapEventToCalendarEvent(event: TEvent, calendars: TCalendar[]): TCalendarEvent {
   const calendar = calendars.find((cal) => cal.id === event.calendarId)
   const color = calendar?.color ? COLOR_MAP[calendar.color] || "blue" : "blue"
 
@@ -96,7 +96,7 @@ export default function BigCalendar({ userId }: TProps) {
     }
 
     try {
-      const optimisticEvent: Event = {
+      const optimisticEvent: TEvent = {
         id: Date.now(),
         calendarId: calendar.id,
         userId: userIdNum,
@@ -106,13 +106,14 @@ export default function BigCalendar({ userId }: TProps) {
         endTime: event.end,
         location: event.location || null,
         allDay: event.allDay || false,
+        recurrenceRule: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       }
 
       await globalMutate(
         `events-${userId}`,
-        (current?: Event[]) => (current ? [...current, optimisticEvent] : [optimisticEvent]),
+        (current?: TEvent[]) => (current ? [...current, optimisticEvent] : [optimisticEvent]),
         { revalidate: false, rollbackOnError: true }
       )
 

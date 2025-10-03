@@ -1,11 +1,11 @@
 "use client"
 
 import React, { createContext, useContext, ReactNode } from "react"
-import type { Event, Calendar } from "@/server/schema"
+import type { TEvent, TCalendar } from "@/server/schema"
 
 interface CalendarDataContextType {
-  events: Event[]
-  calendars: Calendar[]
+  events: TEvent[]
+  calendars: TCalendar[]
   userId?: number
 }
 
@@ -13,8 +13,8 @@ const CalendarDataContext = createContext<CalendarDataContextType | undefined>(u
 
 interface CalendarDataProviderProps {
   children: ReactNode
-  events: Event[]
-  calendars: Calendar[]
+  events: TEvent[]
+  calendars: TCalendar[]
   userId?: number
 }
 

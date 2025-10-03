@@ -1,106 +1,92 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useUser } from '@stackframe/stack'
-import { checkOnboardingStatus } from "@/modules/onboarding/server/actions"
-import { Loader2 } from "lucide-react"
+import { checkOnboardingStatusAction } from "@/modules/onboarding/server/actions"
 
 type TProps = {
   children: React.ReactNode
   requireOnboarding?: boolean
 }
 
-// Cache onboarding status to avoid repeated server calls
-const onboardingCache = new Map<string, { completed: boolean; timestamp: number }>()
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-
-// Function to clear cache when onboarding is completed
-export function clearOnboardingCache(userId: string) {
-  onboardingCache.delete(userId)
-}
-
 export function OnboardingGuard({ children, requireOnboarding = true }: TProps) {
-  const router = useRouter()
   const user = useUser()
-  const [isChecking, setIsChecking] = useState(true)
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [showContent, setShowContent] = useState(false)
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false)
 
   useEffect(() => {
-    const checkAccess = async () => {
+    const checkOnboarding = async () => {
       if (!user) {
-        router.push("/auth/signin")
-        return
-      }
-
-      // Check cache first
-      const cached = onboardingCache.get(user.id)
-      const now = Date.now()
-      
-      if (cached && (now - cached.timestamp) < CACHE_DURATION) {
-        const hasCompleted = cached.completed
-        
-        if (requireOnboarding && !hasCompleted) {
-          router.push("/onboarding")
-          return
-        }
-
-        if (!requireOnboarding && hasCompleted) {
-          router.push("/dashboard/calendar")
-          return
-        }
-
-        setIsAuthorized(true)
-        setIsChecking(false)
-        setShowContent(true)
+        router.push('/auth/signin')
         return
       }
 
       try {
-        const result = await checkOnboardingStatus(user.id)
-        const hasCompleted = result.success && result.completed
+        const result = await checkOnboardingStatusAction(user.id)
         
-        // Cache the result
-        onboardingCache.set(user.id, { completed: hasCompleted, timestamp: now })
-
-        if (requireOnboarding && !hasCompleted) {
-          router.push("/onboarding")
-          return
+        if (result.success) {
+          setIsOnboardingComplete(result.isCompleted)
+          
+          if (requireOnboarding && !result.isCompleted) {
+            router.push('/onboarding')
+            return
+          }
+          
+          if (!requireOnboarding && result.isCompleted) {
+            router.push('/dashboard/calendar')
+            return
+          }
+        } else {
+          console.error('Failed to check onboarding status:', result.error)
+          if (requireOnboarding) {
+            router.push('/onboarding')
+            return
+          }
         }
-
-        if (!requireOnboarding && hasCompleted) {
-          router.push("/dashboard/calendar")
-          return
-        }
-
-        setIsAuthorized(true)
-        setShowContent(true)
       } catch (error) {
         console.error('Error checking onboarding status:', error)
         if (requireOnboarding) {
-          router.push("/onboarding")
-        } else {
-          router.push("/auth/signin")
+          router.push('/onboarding')
+          return
         }
       } finally {
-        setIsChecking(false)
+        setIsLoading(false)
       }
     }
 
-    checkAccess()
-  }, [router, user, requireOnboarding])
+    checkOnboarding()
+  }, [user, router, requireOnboarding])
 
-  if (!showContent) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     )
   }
 
+  if (!user) {
+    return null
+  }
+
+  if (requireOnboarding && !isOnboardingComplete) {
+    return null
+  }
+
+  if (!requireOnboarding && isOnboardingComplete) {
+    return null
+  }
+
   return <>{children}</>
+}
+
+export function clearOnboardingCache(userId: string) {
+  // Clear any cached onboarding status
+  // This is a placeholder for cache clearing logic
+  console.log('Clearing onboarding cache for user:', userId)
 }
