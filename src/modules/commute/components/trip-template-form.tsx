@@ -249,15 +249,6 @@ export function TripTemplateForm({ onSuccess, onCancel }: TTripTemplateFormProps
               <Label htmlFor="addToCalendar">Add trips to calendar</Label>
             </div>
           </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Template"}
-            </Button>
-          </div>
         </form>
       </CardContent>
     </Card>

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useUser } from '@stackframe/stack'
+import { checkOnboardingStatus } from "@/modules/onboarding/server/actions"
 
 export default function HomePage() {
   const router = useRouter()
@@ -16,14 +17,10 @@ export default function HomePage() {
         return
       }
 
-      // TODO: Check if user has completed onboarding
-      // For now, we'll assume they need onboarding
-      // In a real app, you'd check the database for their commute profile
       try {
-        // This would be a check to see if they have a commute profile
-        const hasCompletedOnboarding = false // Replace with actual check
+        const result = await checkOnboardingStatus(user.id)
         
-        if (!hasCompletedOnboarding) {
+        if (!result.success || !result.completed) {
           router.push("/onboarding")
         } else {
           router.push("/dashboard/calendar")

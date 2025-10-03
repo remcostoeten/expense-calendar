@@ -3,18 +3,19 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUser } from '@stackframe/stack'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { useToast } from "@/hooks/use-toast"
 import { completeOnboardingAction } from "@/modules/onboarding/server/actions"
-import { toast } from "sonner"
-
+import { clearOnboardingCache } from "@/components/auth/onboarding-guard"
 import { CommuteMethodStep } from "./steps/commute-method-step"
 import { AllowanceInfoStep } from "./steps/allowance-info-step"
 import { AddressesStep } from "./steps/addresses-step"
 import { OfficeDaysStep } from "./steps/office-days-step"
 import { HomeOfficeStep } from "./steps/home-office-step"
 import { SummaryStep } from "./steps/summary-step"
+
 
 export type TOnboarding = {
   commuteMethod: 'car' | 'public_transport' | 'walking' | 'bike'
@@ -25,6 +26,7 @@ export type TOnboarding = {
   homePostalCode: string
   homeCity: string
   homeStreet: string
+  
   officeAddress: string
   officePostalCode: string
   officeCity: string
@@ -32,13 +34,12 @@ export type TOnboarding = {
   distanceKm?: number
   hasFixedOfficeDays: boolean
   fixedOfficeDays: number[]
+  
   hasHomeOfficeAllowance: boolean
   homeOfficeDays: number[]
 }
 
-type TStep = { id: string; title: string; component: (props: any) => JSX.Element }
-
-const STEPS: TStep[] = [
+const STEPS = [
   { id: 'commute-method', title: 'Commute Method', component: CommuteMethodStep },
   { id: 'allowance-info', title: 'Allowance Info', component: AllowanceInfoStep },
   { id: 'addresses', title: 'Addresses', component: AddressesStep },
@@ -50,8 +51,9 @@ const STEPS: TStep[] = [
 export default function OnboardingFlow() {
   const user = useUser()
   const router = useRouter()
+  const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
   const [data, setData] = useState<TOnboarding>({
     commuteMethod: 'car',
     kmAllowance: 0.23,
@@ -70,8 +72,8 @@ export default function OnboardingFlow() {
     homeOfficeDays: [],
   })
 
-  function updateData(updates: Partial<TOnboarding>) {
-  setData(prev => ({ ...prev, ...updates }))
+  const updateData = (updates: Partial<TOnboarding>) => {
+    setData(prev => ({ ...prev, ...updates }))
   }
 
   function nextStep() {
@@ -87,27 +89,44 @@ export default function OnboardingFlow() {
   }
 
   async function completeOnboarding() {
-    if (!user?.id) {
-      toast.error("User not authenticated. Please sign in again.")
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to complete onboarding.",
+        variant: "destructive",
+      })
       return
     }
 
-    setIsLoading(true)
-
+    setIsCompleting(true)
+    
     try {
       const result = await completeOnboardingAction(user.id, data)
-
+      
       if (result.success) {
-        toast.success("Onboarding completed successfully!")
+        // Clear the cache so the next page load is fresh
+        clearOnboardingCache(user.id)
+        toast({
+          title: "Success",
+          description: "Onboarding completed successfully! Welcome to Comutorino.",
+        })
         router.push('/dashboard/calendar')
       } else {
-        toast.error(result.error || "Failed to complete onboarding. Please try again.")
+        toast({
+          title: "Error",
+          description: result.error || "Failed to complete onboarding. Please try again.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Error completing onboarding:', error)
-      toast.error("An unexpected error occurred. Please try again.")
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      })
     } finally {
-      setIsLoading(false)
+      setIsCompleting(false)
     }
   }
 
@@ -137,6 +156,7 @@ export default function OnboardingFlow() {
           <h1 className="text-xl font-semibold mt-2">{currentStepData.title}</h1>
         </div>
 
+        {/* Step Content */}
         <Card>
           <CardContent className="p-6">
             <StepComponent
@@ -151,6 +171,7 @@ export default function OnboardingFlow() {
           </CardContent>
         </Card>
 
+        {/* Navigation */}
         <div className="flex justify-between mt-6">
           <Button
             variant="outline"
@@ -159,14 +180,14 @@ export default function OnboardingFlow() {
           >
             Previous
           </Button>
-
+          
           {currentStep < STEPS.length - 1 ? (
             <Button onClick={nextStep}>
               Next
             </Button>
           ) : (
-            <Button onClick={completeOnboarding} disabled={isLoading}>
-              {isLoading ? "Completing..." : "Complete Setup"}
+            <Button onClick={completeOnboarding} disabled={isCompleting}>
+              {isCompleting ? "Completing..." : "Complete Setup"}
             </Button>
           )}
         </div>

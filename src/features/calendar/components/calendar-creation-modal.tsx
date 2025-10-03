@@ -112,14 +112,6 @@ export function CalendarCreationModal({
             </Select>
           </div>
           {createCalendar.error && <p className="text-sm text-destructive">{createCalendar.error}</p>}
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={createCalendar.isPending}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createCalendar.isPending}>
-              {createCalendar.isPending ? "Creating..." : "Create Calendar"}
-            </Button>
-          </div>
         </form>
       </DialogContent>
     </Dialog>

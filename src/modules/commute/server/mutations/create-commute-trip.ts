@@ -35,7 +35,7 @@ export async function createCommuteTrip(data: TCreateCommuteTripData): Promise<N
     isFromHome: data.isFromHome !== undefined ? data.isFromHome : true,
     notes: data.notes || null,
     status: 'completed',
-    totalAllowance: '0.00' // Will be calculated below
+    totalAllowance: '0.00' 
   }
   
   if (data.fromAddress && data.toAddress && data.commuteMethod) {

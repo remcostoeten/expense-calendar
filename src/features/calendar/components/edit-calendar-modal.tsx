@@ -96,21 +96,6 @@ export function EditCalendarModal({ calendar, isOpen, onClose, onSave }: TProps)
               </SelectContent>
             </Select>
           </div>
-
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading || !name.trim()}>
-              {isLoading ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
         </form>
       </DialogContent>
     </Dialog>

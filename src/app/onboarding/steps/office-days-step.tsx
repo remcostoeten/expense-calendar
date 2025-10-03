@@ -5,11 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import type { OnboardingData } from "../onboarding-flow"
+import type { TOnboarding } from "../onboarding-flow"
 
 interface OfficeDaysStepProps {
-  data: OnboardingData
-  updateData: (updates: Partial<OnboardingData>) => void
+  data: TOnboarding
+  updateData: (updates: Partial<TOnboarding>) => void
   nextStep: () => void
   prevStep: () => void
   isFirstStep: boolean

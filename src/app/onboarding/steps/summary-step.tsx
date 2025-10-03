@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Car, Bus, Footprints, Bike, MapPin, Calendar, Euro } from "lucide-react"
-import type { OnboardingData } from "../onboarding-flow"
+import type { TOnboarding } from "../onboarding-flow"
 
 type TProps = { 
-  data: OnboardingData
-  updateData: (updates: Partial<OnboardingData>) => void
+  data: TOnboarding
+  updateData: (updates: Partial<TOnboarding>) => void
   nextStep: () => void
   prevStep: () => void
   isFirstStep: boolean

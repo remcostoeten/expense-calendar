@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import type { OnboardingData } from "../onboarding-flow"
+import type { TOnboarding } from "../onboarding-flow"
 
 interface AllowanceInfoStepProps {
-  data: OnboardingData
-  updateData: (updates: Partial<OnboardingData>) => void
+  data: TOnboarding
+  updateData: (updates: Partial<TOnboarding>) => void
   nextStep: () => void
   prevStep: () => void
   isFirstStep: boolean

@@ -2,7 +2,7 @@
 
 import { db } from "@/server/db"
 import { commuteProfiles } from "@/server/schema"
-import type { OnboardingData } from "@/app/onboarding/onboarding-flow"
+import type { TOnboarding } from "@/app/onboarding/onboarding-flow"
 
 type TCommuteProfile = typeof commuteProfiles.$inferInsert
 

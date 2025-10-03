@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Car, Bus, Footprints, Bike } from "lucide-react"
-import type { OnboardingData } from "../onboarding-flow"
+import type { TOnboarding } from "../onboarding-flow"
 
 interface CommuteMethodStepProps {
-  data: OnboardingData
-  updateData: (updates: Partial<OnboardingData>) => void
+  data: TOnboarding
+  updateData: (updates: Partial<TOnboarding>) => void
   nextStep: () => void
   prevStep: () => void
   isFirstStep: boolean

@@ -526,9 +526,9 @@ const formatEventTime = (event: CalendarEvent) => {
   useKeyboardShortcuts(keyboardShortcuts)
 
   return (
-    <div className="group peer text-sidebar-foreground hidden lg:block" data-state={state} data-side="right">
+    <div className="group peer text-sidebar-foreground hidden lg:block fixed right-0 top-0 z-40" data-state={state} data-side="right">
       <div
-        className={`relative z-10 h-full transition-[width] duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] ${state === "collapsed" ? "w-0" : "w-64"} overflow-hidden`}
+        className={`relative z-10 h-screen transition-[width] duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] ${state === "collapsed" ? "w-0" : "w-64"} overflow-hidden`}
       >
         <div className="bg-sidebar/95 backdrop-blur-sm flex h-full w-64 flex-col border-l border-border/50 overflow-hidden">
           <SidebarHeader className="border-b border-border/30 flex-shrink-0 p-4">
@@ -828,7 +828,7 @@ const formatEventTime = (event: CalendarEvent) => {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter className="border-t border-border/30 flex-shrink-0">
+          <SidebarFooter className="border-t border-border/30 flex-shrink-0 sticky bottom-0 bg-sidebar/95 backdrop-blur-sm">
             <div className="flex justify-center p-4">
               <ThemeToggle />
             </div>

@@ -18,7 +18,9 @@ function DualSidebarLayoutInner({ children }: TProps) {
       <NavigationAside/>
 
       <div className="flex flex-1 overflow-hidden min-w-0">
-        <SidebarInset className="overflow-auto flex-1 min-w-0">{children}</SidebarInset>
+        <SidebarInset className={`overflow-auto flex-1 min-w-0 transition-[margin-right] duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] ${state === "collapsed" ? "mr-0" : "mr-64"}`}>
+          {children}
+        </SidebarInset>
 
         <AppSidebar side="right" />
       </div>

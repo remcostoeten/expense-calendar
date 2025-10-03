@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { useCalendarStore } from "@/stores/calendar-store"
 import { getColorClass, COLOR_MAP } from "@/lib/colors"
 import { CalendarCreationModal } from "./calendar-creation-modal"
@@ -54,6 +54,7 @@ export function EventCreationModal({
   const [recurrenceEndType, setRecurrenceEndType] = useState<"never" | "date" | "count">("never")
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("")
   const [recurrenceCount, setRecurrenceCount] = useState(10)
+  const [isCreating, setIsCreating] = useState(false)
 
   useEffect(() => {
     if (initialStart) {
@@ -84,54 +85,61 @@ export function EventCreationModal({
   }, [calendars, pendingCalendarColor])
 
 
-  function handleSubmit(e: React.FormEvent) {
-  e.preventDefault()
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setIsCreating(true)
 
-    const start = allDay ? new Date(`${startDate}T00:00:00`) : new Date(`${startDate}T${startTime}:00`)
+    try {
+      const start = allDay ? new Date(`${startDate}T00:00:00`) : new Date(`${startDate}T${startTime}:00`)
 
-    const end = allDay ? new Date(`${endDate || startDate}T23:59:59`) : new Date(`${endDate}T${endTime}:00`)
+      const end = allDay ? new Date(`${endDate || startDate}T23:59:59`) : new Date(`${endDate}T${endTime}:00`)
 
-    const selectedCalendar = calendars.find(cal => cal.id === selectedCalendarId)
-    const color = selectedCalendar?.color ? COLOR_MAP[selectedCalendar.color] || "blue" : "blue"
+      const selectedCalendar = calendars.find(cal => cal.id === selectedCalendarId)
+      const color = selectedCalendar?.color ? COLOR_MAP[selectedCalendar.color] || "blue" : "blue"
 
-    const eventData: Omit<TCalendarEvent, "id"> = {
-      title,
-      description: description || undefined,
-      location: location || undefined,
-      start,
-      end,
-      color,
-      allDay,
-      isRecurring,
-      recurrenceRule: isRecurring
-        ? {
-            frequency,
-            interval,
-            endDate: recurrenceEndType === "date" ? new Date(recurrenceEndDate) : undefined,
-            count: recurrenceEndType === "count" ? recurrenceCount : undefined,
-          }
-        : undefined,
+      const eventData: Omit<TCalendarEvent, "id"> = {
+        title,
+        description: description || undefined,
+        location: location || undefined,
+        start,
+        end,
+        color,
+        allDay,
+        isRecurring,
+        recurrenceRule: isRecurring
+          ? {
+              frequency,
+              interval,
+              endDate: recurrenceEndType === "date" ? new Date(recurrenceEndDate) : undefined,
+              count: recurrenceEndType === "count" ? recurrenceCount : undefined,
+            }
+          : undefined,
+      }
+
+      onSave(eventData)
+
+      // Reset form
+      setTitle("")
+      setDescription("")
+      setLocation("")
+      setSelectedCalendarId(calendars.length > 0 ? calendars[0].id : "")
+      setStartDate("")
+      setStartTime("")
+      setEndDate("")
+      setEndTime("")
+      setAllDay(false)
+      setIsRecurring(false)
+      setFrequency("weekly")
+      setInterval(1)
+      setRecurrenceEndType("never")
+      setRecurrenceEndDate("")
+      setRecurrenceCount(10)
+      onClose()
+    } catch (error) {
+      console.error("Failed to create event:", error)
+    } finally {
+      setIsCreating(false)
     }
-
-    onSave(eventData)
-
-    // Reset form
-    setTitle("")
-    setDescription("")
-    setLocation("")
-    setSelectedCalendarId(calendars.length > 0 ? calendars[0].id : "")
-    setStartDate("")
-    setStartTime("")
-    setEndDate("")
-    setEndTime("")
-    setAllDay(false)
-    setIsRecurring(false)
-    setFrequency("weekly")
-    setInterval(1)
-    setRecurrenceEndType("never")
-    setRecurrenceEndDate("")
-    setRecurrenceCount(10)
-    onClose()
   }
 
   const availableCalendars = calendars.filter((cal) => cal.isVisible)
@@ -143,7 +151,7 @@ export function EventCreationModal({
           <DialogHeader>
             <DialogTitle>Create New Event</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form id="event-form" onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="event-title">Title *</Label>
               <Input
@@ -341,14 +349,16 @@ export function EventCreationModal({
                 </Button>
               </div>
             </div>
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit">Create Event</Button>
-            </div>
           </form>
+          
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" form="event-form" disabled={isCreating}>
+              {isCreating ? "Creating..." : "Create Event"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

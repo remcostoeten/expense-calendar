@@ -1,12 +1,13 @@
 import { OnboardingGuard } from "@/components/auth/onboarding-guard"
-import ClientCalendar from "./client-calendar"
 
-export const dynamic = "force-dynamic"
-
-export default function CalendarPage() {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <OnboardingGuard requireOnboarding={true}>
-      <ClientCalendar />
+      {children}
     </OnboardingGuard>
   )
 }
