@@ -28,12 +28,6 @@ const nextConfig: NextConfig = {
       config.externals = config.externals || [];
       config.externals.push('@stackframe/stack-sc');
     }
-    
-    // Add alias for the missing Stack Auth module
-    config.resolve = config.resolve || {};
-    config.resolve.alias = config.resolve.alias || {};
-    config.resolve.alias['@stackframe/stack-sc/dist/next-static-analysis-workaround'] = require.resolve('./scripts/stack-auth-workaround.js');
-    
     return config;
   },
 };
