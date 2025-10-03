@@ -70,6 +70,7 @@ import type { Event, Calendar } from "@/server/schema"
  *   )
  * }
  * ```
+ */
 
 export type CreateEventInput = {
   calendarId: number

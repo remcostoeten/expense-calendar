@@ -1,20 +1,33 @@
-import { Loader } from '@googlemaps/js-api-loader'
+// Check if Google Maps is loaded
+const isGoogleMapsLoaded = () => {
+  return typeof window !== 'undefined' && 
+         typeof google !== 'undefined' && 
+         google.maps && 
+         google.maps.places && 
+         google.maps.geometry
+}
 
-// Initialize Google Maps loader
-const loader = new Loader({
-  apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-  version: 'weekly',
-  libraries: ['places', 'geometry']
-})
-
-let mapsLoaded = false
-
-// Ensure Google Maps is loaded
-export const ensureMapsLoaded = async () => {
-  if (!mapsLoaded) {
-    await loader.load()
-    mapsLoaded = true
-  }
+// Wait for Google Maps to be loaded
+const waitForGoogleMaps = (): Promise<void> => {
+  return new Promise((resolve) => {
+    if (isGoogleMapsLoaded()) {
+      resolve()
+      return
+    }
+    
+    const checkInterval = setInterval(() => {
+      if (isGoogleMapsLoaded()) {
+        clearInterval(checkInterval)
+        resolve()
+      }
+    }, 100)
+    
+    // Timeout after 10 seconds
+    setTimeout(() => {
+      clearInterval(checkInterval)
+      resolve()
+    }, 10000)
+  })
 }
 
 // Address autocomplete interface
@@ -30,9 +43,9 @@ export interface AddressSuggestion {
 
 // Get address suggestions from Google Places API
 export const getAddressSuggestions = async (input: string): Promise<AddressSuggestion[]> => {
-  await ensureMapsLoaded()
+  await waitForGoogleMaps()
   
-  if (!input.trim()) return []
+  if (!input.trim() || !isGoogleMapsLoaded()) return []
   
   const service = new google.maps.places.AutocompleteService()
   
@@ -60,7 +73,9 @@ export const getAddressSuggestions = async (input: string): Promise<AddressSugge
 
 // Get detailed address information from place ID
 export const getAddressDetails = async (placeId: string): Promise<AddressSuggestion | null> => {
-  await ensureMapsLoaded()
+  await waitForGoogleMaps()
+  
+  if (!isGoogleMapsLoaded()) return null
   
   const service = new google.maps.places.PlacesService(document.createElement('div'))
   
@@ -110,7 +125,9 @@ export const calculateDistance = async (
   origin: string,
   destination: string
 ): Promise<{ distance: number; duration: string } | null> => {
-  await ensureMapsLoaded()
+  await waitForGoogleMaps()
+  
+  if (!isGoogleMapsLoaded()) return null
   
   const service = new google.maps.DistanceMatrixService()
   
@@ -146,7 +163,9 @@ export const calculateDistance = async (
 
 // Geocode an address to get coordinates
 export const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
-  await ensureMapsLoaded()
+  await waitForGoogleMaps()
+  
+  if (!isGoogleMapsLoaded()) return null
   
   const geocoder = new google.maps.Geocoder()
   
