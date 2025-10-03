@@ -3,12 +3,19 @@
 import { revalidatePath } from "next/cache"
 import { createCommuteTrip } from "../mutations"
 import type { TCreateCommuteTripData } from "../mutations/create-commute-trip"
+import { getAuthenticatedContext } from "@/server/helpers/auth"
 
 export async function createCommuteTripAction(data: Omit<TCreateCommuteTripData, 'userId'>) {
   try {
-    // TODO: Get userId from auth context
-    const userId = "temp-user-id" // This should come from auth
+    const authResult = await getAuthenticatedContext()
+    if (!authResult.ok) {
+      return {
+        success: false,
+        error: "Authentication required"
+      }
+    }
     
+    const userId = authResult.value.stackUserId
     const trip = await createCommuteTrip({
       ...data,
       userId

@@ -40,3 +40,4 @@ Uses Nominatim (OpenStreetMap's geocoding service) for address-to-coordinates co
 - Free service, no API key required
 - Focused on Netherlands addresses (`countrycodes=nl`)
 - Includes proper rate limiting and user agent headers
+

@@ -71,3 +71,4 @@ export async function checkOnboardingStatus(userId: string) {
     return { success: false, completed: false }
   }
 }
+

@@ -3,12 +3,19 @@
 import { revalidatePath } from "next/cache"
 import { createTripTemplate } from "../mutations"
 import type { TCreateTripTemplateData } from "../mutations/create-trip-template"
+import { getAuthenticatedContext } from "@/server/helpers/auth"
 
 export async function createTripTemplateAction(data: Omit<TCreateTripTemplateData, 'userId'>) {
   try {
-    // TODO: Get userId from auth context
-    const userId = "temp-user-id" // This should come from auth
+    const authResult = await getAuthenticatedContext()
+    if (!authResult.ok) {
+      return {
+        success: false,
+        error: "Authentication required"
+      }
+    }
     
+    const userId = authResult.value.stackUserId
     const template = await createTripTemplate({
       ...data,
       userId

@@ -8,17 +8,35 @@ export async function createDefaultCalendarsForUser(userId: number) {
     .from(defaultCalendarTemplates)
     .orderBy(asc(defaultCalendarTemplates.sortOrder))
 
-  if (templates.length === 0) {
-    throw new Error("No default calendar templates found")
-  }
+  let calendarData
 
-  const calendarData = templates.map(template => ({
-    userId,
-    name: template.name,
-    description: template.description,
-    color: template.color,
-    isDefault: template.isDefault,
-  }))
+  if (templates.length === 0) {
+    // Create basic default calendars if no templates exist
+    calendarData = [
+      {
+        userId,
+        name: "Personal",
+        description: "Personal events and appointments",
+        color: "#3b82f6",
+        isDefault: true,
+      },
+      {
+        userId,
+        name: "Work",
+        description: "Work-related events and meetings",
+        color: "#10b981",
+        isDefault: false,
+      }
+    ]
+  } else {
+    calendarData = templates.map(template => ({
+      userId,
+      name: template.name,
+      description: template.description,
+      color: template.color,
+      isDefault: template.isDefault,
+    }))
+  }
 
   const createdCalendars = await db
     .insert(calendars)

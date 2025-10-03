@@ -1,12 +1,19 @@
 "use server"
 
 import { getTripTemplates } from "../queries"
+import { getAuthenticatedContext } from "@/server/helpers/auth"
 
 export async function getTripTemplatesAction(activeOnly: boolean = true) {
   try {
-    // TODO: Get userId from auth context
-    const userId = "temp-user-id" // This should come from auth
+    const authResult = await getAuthenticatedContext()
+    if (!authResult.ok) {
+      return {
+        success: false,
+        error: "Authentication required"
+      }
+    }
     
+    const userId = authResult.value.stackUserId
     const templates = await getTripTemplates(userId, activeOnly)
     
     return {

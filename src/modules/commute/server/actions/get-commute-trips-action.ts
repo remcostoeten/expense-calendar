@@ -1,6 +1,7 @@
 "use server"
 
 import { getCommuteTrips, getCommuteTripsForPeriod } from "../queries"
+import { getAuthenticatedContext } from "@/server/helpers/auth"
 
 export async function getCommuteTripsAction(
   startDate?: Date,
@@ -8,9 +9,15 @@ export async function getCommuteTripsAction(
   status?: string
 ) {
   try {
-    // TODO: Get userId from auth context
-    const userId = "temp-user-id" // This should come from auth
+    const authResult = await getAuthenticatedContext()
+    if (!authResult.ok) {
+      return {
+        success: false,
+        error: "Authentication required"
+      }
+    }
     
+    const userId = authResult.value.stackUserId
     const trips = await getCommuteTrips(userId, startDate, endDate, status)
     
     return {
@@ -31,9 +38,15 @@ export async function getCommuteTripsForPeriodAction(
   endDate: Date
 ) {
   try {
-    // TODO: Get userId from auth context
-    const userId = "temp-user-id" // This should come from auth
+    const authResult = await getAuthenticatedContext()
+    if (!authResult.ok) {
+      return {
+        success: false,
+        error: "Authentication required"
+      }
+    }
     
+    const userId = authResult.value.stackUserId
     const trips = await getCommuteTripsForPeriod(userId, startDate, endDate)
     
     const summary = trips.reduce((acc, { trip }) => {

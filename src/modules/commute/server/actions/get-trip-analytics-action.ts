@@ -1,15 +1,22 @@
 "use server"
 
 import { getTripAnalytics, getTripSummaryForPeriod } from "../queries"
+import { getAuthenticatedContext } from "@/server/helpers/auth"
 
 export async function getTripAnalyticsAction(
   startDate?: Date,
   endDate?: Date
 ) {
   try {
-    // TODO: Get userId from auth context
-    const userId = "temp-user-id" // This should come from auth
+    const authResult = await getAuthenticatedContext()
+    if (!authResult.ok) {
+      return {
+        success: false,
+        error: "Authentication required"
+      }
+    }
     
+    const userId = authResult.value.stackUserId
     const analytics = await getTripAnalytics(userId, startDate, endDate)
     
     return {
@@ -30,9 +37,15 @@ export async function getTripSummaryForPeriodAction(
   endDate: Date
 ) {
   try {
-    // TODO: Get userId from auth context
-    const userId = "temp-user-id" // This should come from auth
+    const authResult = await getAuthenticatedContext()
+    if (!authResult.ok) {
+      return {
+        success: false,
+        error: "Authentication required"
+      }
+    }
     
+    const userId = authResult.value.stackUserId
     const summary = await getTripSummaryForPeriod(userId, startDate, endDate)
     
     return {

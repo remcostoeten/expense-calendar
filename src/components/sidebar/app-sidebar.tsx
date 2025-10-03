@@ -176,16 +176,24 @@ function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers?: {
         <div className="px-6 py-4 border-t border-border/30">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Calendars</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-lg transition-all duration-200 hover:scale-105"
-              onClick={() => setIsCalendarModalOpen(true)}
-              title="Add new calendar"
-            >
-              <RiAddLine className="h-4 w-4" />
-              <span className="sr-only">Add calendar</span>
-            </Button>
+            <div className="flex items-center gap-1">
+              <KeyboardIndicator
+                shortcuts={[
+                  { keys: ["Shift", "↑"], action: "Move up" },
+                  { keys: ["Shift", "↓"], action: "Move down" }
+                ]}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-lg transition-all duration-200 hover:scale-105"
+                onClick={() => setIsCalendarModalOpen(true)}
+                title="Add new calendar"
+              >
+                <RiAddLine className="h-4 w-4" />
+                <span className="sr-only">Add calendar</span>
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -216,21 +224,23 @@ function MobileSidebarContent({ contextMenuHandlers }: { contextMenuHandlers?: {
                       {calendar.name}
                     </span>
                   </span>
-                  <span
-                    className={`size-3 rounded-full border-2 border-white shadow-sm ${
-                      calendar.color === "emerald"
-                        ? "bg-emerald-500"
-                        : calendar.color === "orange"
-                          ? "bg-orange-500"
-                          : calendar.color === "violet"
-                            ? "bg-violet-500"
-                            : calendar.color === "blue"
-                              ? "bg-blue-500"
-                              : calendar.color === "rose"
-                                ? "bg-rose-500"
-                                : "bg-gray-500"
-                    }`}
-                  />
+                  <div className="flex items-center justify-center">
+                    <span
+                      className={`size-3 rounded-full border-2 border-white shadow-sm ${
+                        calendar.color === "emerald"
+                          ? "bg-emerald-500"
+                          : calendar.color === "orange"
+                            ? "bg-orange-500"
+                            : calendar.color === "violet"
+                              ? "bg-violet-500"
+                              : calendar.color === "blue"
+                                ? "bg-blue-500"
+                                : calendar.color === "rose"
+                                  ? "bg-rose-500"
+                                  : "bg-gray-500"
+                      }`}
+                    />
+                  </div>
                 </button>
                 </CalendarContextMenu>
               </div>
@@ -526,12 +536,12 @@ const formatEventTime = (event: CalendarEvent) => {
   useKeyboardShortcuts(keyboardShortcuts)
 
   return (
-    <div className="group peer text-sidebar-foreground hidden lg:block fixed right-0 top-0 z-40" data-state={state} data-side="right">
+    <div className="group peer text-sidebar-foreground hidden lg:block fixed right-0 top-0 z-30" data-state={state} data-side="right">
       <div
         className={`relative z-10 h-screen transition-[width] duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] ${state === "collapsed" ? "w-0" : "w-64"} overflow-hidden`}
       >
         <div className="bg-sidebar/95 backdrop-blur-sm flex h-full w-64 flex-col border-l border-border/50 overflow-hidden">
-          <SidebarHeader className="border-b border-border/30 flex-shrink-0 p-4">
+          <SidebarHeader className="border-b border-border/30 flex-shrink-0 px-4 py-4">
             <div className="flex justify-between items-center">
               <CalendarSettings />
               <RightSidebarTrigger
@@ -639,7 +649,7 @@ const formatEventTime = (event: CalendarEvent) => {
             <SidebarGroup className="px-4 mt-6 pt-6 border-t border-border/30 flex-1 min-h-0">
               <div className="flex items-center justify-between flex-shrink-0 mb-4">
                 <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">Calendars</SidebarGroupLabel>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <KeyboardIndicator
                     shortcuts={[
                       { keys: ["Shift", "↑"], action: "Move up" },
@@ -687,7 +697,7 @@ const formatEventTime = (event: CalendarEvent) => {
                               {calendar.name}
                             </span>
                           </span>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center justify-center shrink-0">
                             <span
                               className={`size-3 rounded-full border border-background/50 shadow-sm transition-transform duration-200 group-hover:scale-110 ${
                                 calendar.color === "emerald"
