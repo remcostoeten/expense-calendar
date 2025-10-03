@@ -160,9 +160,9 @@ export function DayView({
                                             hourHeight={hourHeight}
                                             isBeingDragged={dragAndDrop.draggedEvent?.id === event.id}
                                             onMouseDown={dragAndDrop.handleEventMouseDown}
-                                            onClick={(e, evt) => {
-                                                evt.stopPropagation()
-                                                onEventClick(e)
+                                            onClick={(evt, e) => {
+                                                e.stopPropagation()
+                                                onEventClick(evt)
                                             }}
                                         />
                                     )

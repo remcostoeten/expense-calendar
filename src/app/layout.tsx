@@ -2,16 +2,14 @@ import { StackProvider } from '@stackframe/stack'
 import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
-import { Suspense } from 'react'
-import { Toaster } from 'sonner'
 import { stackServerApp } from './stack'
-import { ThemeProvider } from '@/components/theme-provider'
+import { Suspense } from 'react'
 import './globals.css'
-import { TooltipProvider } from '@radix-ui/react-tooltip'
+import { Providers } from '@/components/providers'
 
 export const metadata: Metadata = {
     title: 'Calendar || Commute tracker',
-    description: 'Calendar and commute tracker application'
+    description: 'Get a grip on your work commute'
 }
 
 export default function RootLayout({
@@ -23,14 +21,11 @@ export default function RootLayout({
         <StackProvider app={stackServerApp}>
             <html lang='en' suppressHydrationWarning>
                 <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-                    <TooltipProvider>
-                        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                            <Suspense fallback={<div>Loading...</div>}>
-                                {children}
-                            </Suspense>
-                        </ThemeProvider>
-                    </TooltipProvider>
-                    <Toaster />
+                    <Providers>
+                        <Suspense fallback={<div className="p-4"><div className="h-6 w-40 bg-muted rounded animate-pulse mb-4" /><div className="h-10 w-full bg-muted rounded animate-pulse" /></div>}>
+                            {children}
+                        </Suspense>
+                    </Providers>
                 </body>
             </html>
         </StackProvider>

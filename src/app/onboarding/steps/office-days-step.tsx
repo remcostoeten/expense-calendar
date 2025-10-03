@@ -27,7 +27,7 @@ const DAYS = [
   { id: 0, name: 'Sunday', short: 'Su' },
 ]
 
-export default function OfficeDaysStep({
+export function OfficeDaysStep({
   data,
   updateData,
   nextStep

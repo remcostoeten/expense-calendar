@@ -49,7 +49,7 @@ const COMMUTE_METHODS = [
   }
 ]
 
-export default function CommuteMethodStep({
+export function CommuteMethodStep({
   data,
   updateData,
   nextStep

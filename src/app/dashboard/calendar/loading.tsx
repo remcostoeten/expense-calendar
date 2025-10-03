@@ -1,7 +1,6 @@
-import { DualSidebarLayout } from "@/components/sidebar/dual-sidebar-layout"
+import { DualSidebarLayout, RightSidebarTrigger } from "@/components/sidebar"
 import { CalendarSkeleton } from "@/features/calendar/components/calendar-skeleton"
 import { Skeleton } from "@/components/ui/skeleton"
-import { RightSidebarTrigger } from "@/components/sidebar/app-sidebar"
 
 export default function CalendarLoading() {
   return (

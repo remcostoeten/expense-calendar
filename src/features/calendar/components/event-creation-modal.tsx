@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useCalendarStore } from "@/stores/calendar-store"
-import { getColorClass } from "@/lib/colors"
+import { getColorClass, COLOR_MAP } from "@/lib/colors"
 import { CalendarCreationModal } from "./calendar-creation-modal"
 import type { TCalendarEvent } from "./event-calendar"
 
@@ -83,15 +83,16 @@ export function EventCreationModal({
     }
   }, [calendars, pendingCalendarColor])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+
+  function handleSubmit(e: React.FormEvent) {
+  e.preventDefault()
 
     const start = allDay ? new Date(`${startDate}T00:00:00`) : new Date(`${startDate}T${startTime}:00`)
 
     const end = allDay ? new Date(`${endDate || startDate}T23:59:59`) : new Date(`${endDate}T${endTime}:00`)
 
     const selectedCalendar = calendars.find(cal => cal.id === selectedCalendarId)
-    const color = selectedCalendar?.color || "blue"
+    const color = selectedCalendar?.color ? COLOR_MAP[selectedCalendar.color] || "blue" : "blue"
 
     const eventData: Omit<TCalendarEvent, "id"> = {
       title,

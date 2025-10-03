@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { AddressAutocompleteInput } from "@/modules/commute/components/address-autocomplete-input"
+import { MapPin, Navigation, Calculator } from "lucide-react"
 import type { OnboardingData } from "../onboarding-flow"
+import { calculateDistanceAndGeocode } from "@/modules/commute"
 
 interface AddressesStepProps {
   data: OnboardingData
@@ -18,202 +19,155 @@ interface AddressesStepProps {
   completeOnboarding: () => void
 }
 
-export default function AddressesStep({
+export function AddressesStep({
   data,
   updateData,
   nextStep
 }: AddressesStepProps) {
-  const [homeAddress, setHomeAddress] = useState({
-    street: data.homeStreet || '',
-    postalCode: data.homePostalCode || '',
-    city: data.homeCity || ''
-  })
+  const [homeCoordinates, setHomeCoordinates] = useState({ latitude: 0, longitude: 0 })
+  const [officeCoordinates, setOfficeCoordinates] = useState({ latitude: 0, longitude: 0 })
 
-  const [officeAddress, setOfficeAddress] = useState({
-    street: data.officeStreet || '',
-    postalCode: data.officePostalCode || '',
-    city: data.officeCity || ''
-  })
-
-  const updateHomeAddress = (field: keyof typeof homeAddress, value: string) => {
-    const newAddress = { ...homeAddress, [field]: value }
-    setHomeAddress(newAddress)
-    
-    const fullAddress = `${newAddress.street}, ${newAddress.postalCode} ${newAddress.city}, Netherlands`
+  const handleHomeAddressChange = (address: any) => {
     updateData({
-      homeStreet: newAddress.street,
-      homePostalCode: newAddress.postalCode,
-      homeCity: newAddress.city,
-      homeAddress: fullAddress
+      homeStreet: address.street,
+      homePostalCode: address.postalCode,
+      homeCity: address.city,
+      homeAddress: address.formattedAddress
     })
+    setHomeCoordinates(address.coordinates)
   }
 
-  const updateOfficeAddress = (field: keyof typeof officeAddress, value: string) => {
-    const newAddress = { ...officeAddress, [field]: value }
-    setOfficeAddress(newAddress)
-    
-    const fullAddress = `${newAddress.street}, ${newAddress.postalCode} ${newAddress.city}, Netherlands`
+  const handleOfficeAddressChange = (address: any) => {
     updateData({
-      officeStreet: newAddress.street,
-      officePostalCode: newAddress.postalCode,
-      officeCity: newAddress.city,
-      officeAddress: fullAddress
+      officeStreet: address.street,
+      officePostalCode: address.postalCode,
+      officeCity: address.city,
+      officeAddress: address.formattedAddress
     })
+    setOfficeCoordinates(address.coordinates)
   }
 
-  const calculateDistance = async () => {
-    // TODO: Implement distance calculation using a mapping service
-    // For now, we'll use a mock calculation
-    const mockDistance = Math.round(Math.random() * 50 + 5) // 5-55 km
-    updateData({ distanceKm: mockDistance })
+  async function calculateDistance() {
+    const distance = await calculateDistanceAndGeocode(data.homeAddress, data.officeAddress, data.commuteMethod)
+    updateData({ distanceKm: distance?.route?.distanceKm })
+    console.log(distance)
   }
 
-  const isFormValid = homeAddress.street && homeAddress.postalCode && homeAddress.city &&
-                     officeAddress.street && officeAddress.postalCode && officeAddress.city
+
+  const isFormValid = data.homeAddress && data.officeAddress
 
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Your Addresses</h2>
         <p className="text-muted-foreground">
-          Enter your home and office addresses to calculate commuting distance
+          Let's set up your home and office addresses for accurate distance calculations
         </p>
       </div>
 
-      <div className="grid gap-6">
-        {/* Home Address */}
-        <Card>
+      {/* Home Address */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span>🏠</span>
+            Home Address
+          </CardTitle>
+          <CardDescription>
+            Your residential address in the Netherlands
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AddressAutocompleteInput
+            label="Home Address"
+            placeholder="Search for your home address..."
+            value={data.homeAddress || ''}
+            onChange={handleHomeAddressChange}
+            required
+          />
+        </CardContent>
+      </Card>
+
+      <Separator />
+
+      {/* Office Address */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span>🏢</span>
+            Office Address
+          </CardTitle>
+          <CardDescription>
+            Your workplace address in the Netherlands
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AddressAutocompleteInput
+            label="Office Address"
+            placeholder="Search for your office address..."
+            value={data.officeAddress || ''}
+            onChange={handleOfficeAddressChange}
+            required
+          />
+        </CardContent>
+      </Card>
+
+      {(homeCoordinates.latitude !== 0 && officeCoordinates.latitude !== 0) && (
+        <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span>🏠</span>
-              Home Address
+            <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-200">
+              <Navigation className="w-5 h-5" />
+              Route Information
             </CardTitle>
-            <CardDescription>
-              Your residential address in the Netherlands
+            <CardDescription className="text-green-600 dark:text-green-400">
+              Distance and route details for your commute
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
-                <Label htmlFor="home-street">Street Address</Label>
-                <Input
-                  id="home-street"
-                  value={homeAddress.street}
-                  onChange={(e) => updateHomeAddress('street', e.target.value)}
-                  placeholder="e.g., Hoofdstraat 123"
-                />
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <span className="text-sm">
+                  <strong>From:</strong> {data.homeAddress}
+                </span>
               </div>
-              <div>
-                <Label htmlFor="home-postal">Postal Code</Label>
-                <Input
-                  id="home-postal"
-                  value={homeAddress.postalCode}
-                  onChange={(e) => updateHomeAddress('postalCode', e.target.value.toUpperCase())}
-                  placeholder="e.g., 1234 AB"
-                  maxLength={7}
-                />
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <span className="text-sm">
+                  <strong>To:</strong> {data.officeAddress}
+                </span>
               </div>
             </div>
-            <div>
-              <Label htmlFor="home-city">City</Label>
-              <Input
-                id="home-city"
-                value={homeAddress.city}
-                onChange={(e) => updateHomeAddress('city', e.target.value)}
-                placeholder="e.g., Amsterdam"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Separator />
-
-        {/* Office Address */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span>🏢</span>
-              Office Address
-            </CardTitle>
-            <CardDescription>
-              Your workplace address in the Netherlands
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
-                <Label htmlFor="office-street">Street Address</Label>
-                <Input
-                  id="office-street"
-                  value={officeAddress.street}
-                  onChange={(e) => updateOfficeAddress('street', e.target.value)}
-                  placeholder="e.g., Business Park 456"
-                />
-              </div>
-              <div>
-                <Label htmlFor="office-postal">Postal Code</Label>
-                <Input
-                  id="office-postal"
-                  value={officeAddress.postalCode}
-                  onChange={(e) => updateOfficeAddress('postalCode', e.target.value.toUpperCase())}
-                  placeholder="e.g., 5678 CD"
-                  maxLength={7}
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="office-city">City</Label>
-              <Input
-                id="office-city"
-                value={officeAddress.city}
-                onChange={(e) => updateOfficeAddress('city', e.target.value)}
-                placeholder="e.g., Rotterdam"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Distance Calculation */}
-        {isFormValid && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span>📏</span>
-                Distance Calculation
-              </CardTitle>
-              <CardDescription>
-                Calculate the distance between your home and office
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  {data.distanceKm ? (
-                    <p className="text-lg font-semibold">
-                      Distance: {data.distanceKm} km
-                    </p>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      Click to calculate distance
-                    </p>
-                  )}
+            
+              <div className="mt-4 p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Calculator className="w-4 h-4 text-green-700 dark:text-green-300" />
+                  <span className="font-medium text-green-800 dark:text-green-200">
+                    Distance: {data.distanceKm} km
+                  </span>
                 </div>
-                <Button onClick={calculateDistance} variant="outline">
+              </div>
+              <div className="mt-4">
+                <Button
+                  onClick={calculateDistance}
+                  variant="outline"
+                  className="w-full border-green-300 text-green-700 hover:bg-green-100 dark:border-green-700 dark:text-green-300 dark:hover:bg-green-900"
+                >
+                  <Calculator className="w-4 h-4 mr-2" />
                   Calculate Distance
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+          </CardContent>
+        </Card>
+      )}
 
-      <div className="pt-4">
+      {/* Navigation */}
+      <div className="flex justify-end">
         <Button 
           onClick={nextStep} 
-          className="w-full"
-          disabled={!isFormValid || !data.distanceKm}
+          disabled={!isFormValid}
+          className="bg-blue-600 hover:bg-blue-700"
         >
-          Continue
+          Next: Office Days
         </Button>
       </div>
     </div>

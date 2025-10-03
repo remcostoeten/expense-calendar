@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { Car, Bus, Footprints, Bike, MapPin, Calendar, Euro } from "lucide-react"
 import type { OnboardingData } from "../onboarding-flow"
 
-interface SummaryStepProps {
+type TProps = { 
   data: OnboardingData
   updateData: (updates: Partial<OnboardingData>) => void
   nextStep: () => void
@@ -34,10 +34,10 @@ const COMMUTE_METHOD_ICONS = {
   bike: Bike,
 }
 
-export default function SummaryStep({
+export function SummaryStep({
   data,
   completeOnboarding
-}: SummaryStepProps) {
+}: TProps) {
   const CommuteIcon = COMMUTE_METHOD_ICONS[data.commuteMethod]
   const commuteMethodName = data.commuteMethod.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
 
@@ -45,14 +45,12 @@ export default function SummaryStep({
     let weeklyAllowance = 0
 
     if (data.hasFixedOfficeDays) {
-      // Calculate office days allowance
       const officeDaysCount = data.fixedOfficeDays.length
       const kmAllowance = officeDaysCount * 2 * parseFloat(data.distanceKm?.toString() || '0') * data.kmAllowance
       weeklyAllowance += kmAllowance
     }
 
     if (data.hasHomeOfficeAllowance) {
-      // Calculate home office days allowance
       const homeOfficeDaysCount = data.homeOfficeDays.length
       const homeOfficeAllowance = homeOfficeDaysCount * data.homeOfficeAllowance
       weeklyAllowance += homeOfficeAllowance
@@ -73,7 +71,6 @@ export default function SummaryStep({
       </div>
 
       <div className="grid gap-6">
-        {/* Commute Method */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -193,7 +190,6 @@ export default function SummaryStep({
           </Card>
         )}
 
-        {/* Weekly Allowance Estimate */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

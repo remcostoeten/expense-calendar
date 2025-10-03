@@ -14,6 +14,8 @@ import { useZoom } from "@/hooks/use-zoom"
 import { useTimeSelection } from "@/hooks/use-time-selection"
 import { useEventDragAndDrop } from "@/hooks/use-event-drag-drop"
 import { CalendarHeader } from "./calendar-header"
+import { useCalendarData } from "../contexts/calendar-data-context"
+import { CalendarCreationModal } from "./calendar-creation-modal"
 
 export type TCalendarEvent = {
   id: string
@@ -57,8 +59,10 @@ export function EventCalendar({
   const { currentDate, setCurrentDate, showCurrentTime } = useCalendarStore()
   const [view, setView] = useState<TCalendarView>(initialView)
   const [isCreatingEvent, setIsCreatingEvent] = useState(false)
+  const [isCreateCalendarOpen, setIsCreateCalendarOpen] = useState(false)
   const [eventCreationStart, setEventCreationStart] = useState<Date>(new Date())
   const [eventCreationEnd, setEventCreationEnd] = useState<Date>(new Date())
+  const { calendars } = useCalendarData()
   const [isEditingEvent, setIsEditingEvent] = useState(false)
   const [editingEvent, setEditingEvent] = useState<TCalendarEvent | null>(null)
 
@@ -227,6 +231,10 @@ export function EventCalendar({
           onTodayClick={() => setCurrentDate(new Date())}
           onJumpToCurrentTime={jumpToCurrentTime}
           onAddEvent={() => {
+            if (!calendars || calendars.length === 0) {
+              setIsCreateCalendarOpen(true)
+              return
+            }
             const now = new Date()
             setEventCreationStart(now)
             setEventCreationEnd(new Date(now.getTime() + 60 * 60 * 1000))
@@ -251,6 +259,14 @@ export function EventCalendar({
         initialStart={eventCreationStart}
         initialEnd={eventCreationEnd}
         userId={userId}
+        onCalendarCreated={onCalendarCreated}
+      />
+
+      <CalendarCreationModal
+        isOpen={isCreateCalendarOpen}
+        onClose={() => setIsCreateCalendarOpen(false)}
+        onSuccess={() => setIsCreateCalendarOpen(false)}
+        userId={userId?.toString() || ""}
         onCalendarCreated={onCalendarCreated}
       />
 

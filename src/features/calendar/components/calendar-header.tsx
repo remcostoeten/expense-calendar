@@ -1,7 +1,7 @@
 import { format, startOfWeek, endOfWeek } from "date-fns"
 import { ChevronLeft, ChevronRight, Plus, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { RightSidebarTrigger } from "@/components/sidebar/app-sidebar"
+import { RightSidebarTrigger } from "@/components/sidebar"
 import { cn } from "@/lib/utils"
 
 type TCalendarView = "day" | "week" | "month" | "year"

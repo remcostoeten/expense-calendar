@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import CalendarPageWrapper from "@/features/calendar/components/calendar-page-wrapper"
 import { withAuth } from "@/lib/auth/with-auth"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { useStackAuthHelper } from "@/lib/auth/stack-auth-helper"
 
 interface ClientCalendarProps {
@@ -13,7 +13,6 @@ interface ClientCalendarProps {
 
 function ClientCalendar({ user }: ClientCalendarProps) {
   const searchParams = useSearchParams()
-  const { toast } = useToast()
   const { getInternalUserId } = useStackAuthHelper()
   const [internalUserId, setInternalUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -23,18 +22,11 @@ function ClientCalendar({ user }: ClientCalendarProps) {
     const error = searchParams.get("error")
 
     if (success) {
-      toast({
-        title: "Success",
-        description: success,
-      })
+      toast.success(success)
     }
 
     if (error) {
-      toast({
-        title: "Error",
-        description: error,
-        variant: "destructive",
-      })
+      toast.error(error)
     }
   }, [searchParams, toast])
 
@@ -55,26 +47,16 @@ function ClientCalendar({ user }: ClientCalendarProps) {
     }
   }, [user, getInternalUserId])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    )
-  }
+  const isLoading = loading || !internalUserId
 
-  if (!internalUserId) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h3 className="text-lg font-medium text-muted-foreground">Authentication Error</h3>
-          <p className="text-sm text-muted-foreground">Unable to load user data</p>
-        </div>
-      </div>
-    )
-  }
-
-  return <CalendarPageWrapper userId={internalUserId} />
+  return isLoading ? (
+    <div className="p-4">
+      <div className="h-6 w-40 bg-muted rounded animate-pulse mb-4" />
+      <div className="h-[500px] w-full bg-muted rounded animate-pulse" />
+    </div>
+  ) : (
+    <CalendarPageWrapper userId={internalUserId} />
+  )
 }
 
 export default withAuth(ClientCalendar)

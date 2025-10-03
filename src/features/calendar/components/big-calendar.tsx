@@ -2,6 +2,7 @@
 
 import { useMemo, useEffect, useRef } from "react"
 import useSWR from "swr"
+import { useSWRConfig } from "swr"
 import { type TCalendarEvent, EventCalendar } from "./event-calendar"
 import { CalendarShell } from "./calendar-shell"
 import { useCalendar } from "@/server/api-hooks/use-calendar"
@@ -38,6 +39,7 @@ export default function BigCalendar({ userId }: TProps) {
   const { events, calendars } = useCalendarData()
   const userIdNum = parseInt(userId, 10)
   const initializationRef = useRef(false)
+  const { mutate: globalMutate } = useSWRConfig()
   
   if (!userId || isNaN(userIdNum) || userIdNum <= 0) {
     console.error("Invalid user ID:", { userId, userIdNum })
@@ -94,6 +96,26 @@ export default function BigCalendar({ userId }: TProps) {
     }
 
     try {
+      const optimisticEvent: Event = {
+        id: Date.now(),
+        calendarId: calendar.id,
+        userId: userIdNum,
+        title: event.title,
+        description: event.description || null,
+        startTime: event.start,
+        endTime: event.end,
+        location: event.location || null,
+        allDay: event.allDay || false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      await globalMutate(
+        `events-${userId}`,
+        (current?: Event[]) => (current ? [...current, optimisticEvent] : [optimisticEvent]),
+        { revalidate: false, rollbackOnError: true }
+      )
+
       await calendarHook.createEvent.execute({
         calendarId: calendar.id,
         userId: userIdNum,
@@ -108,6 +130,7 @@ export default function BigCalendar({ userId }: TProps) {
       await mutateEvents()
     } catch (error) {
       console.error("Error creating event:", error)
+      await mutateEvents()
     }
   }
 

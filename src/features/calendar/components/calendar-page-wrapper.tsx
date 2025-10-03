@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import useSWR from "swr"
-import { DualSidebarLayout } from "@/components/sidebar/dual-sidebar-layout"
+import { DualSidebarLayout } from "@/components/sidebar"
 import BigCalendar from "./big-calendar"
 import { CalendarDataProvider } from "../contexts/calendar-data-context"
 import { useCalendarSync } from "@/server/api-hooks/use-calendar-sync"

@@ -28,14 +28,15 @@ export function withAuth<P extends object>(
       }
     }, [user, router, redirectTo, requireAuth])
 
-    // Show loading state
+    // Non-blocking loading state: show lightweight skeleton
     if (requireAuth && !user) {
       if (LoadingComponent) {
         return <LoadingComponent />
       }
       return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="p-4">
+          <div className="h-6 w-32 bg-muted rounded animate-pulse mb-3" />
+          <div className="h-10 w-full bg-muted rounded animate-pulse" />
         </div>
       )
     }

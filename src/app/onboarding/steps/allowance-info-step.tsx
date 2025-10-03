@@ -17,7 +17,7 @@ interface AllowanceInfoStepProps {
   completeOnboarding: () => void
 }
 
-export default function AllowanceInfoStep({
+export function AllowanceInfoStep({
   data,
   updateData,
   nextStep

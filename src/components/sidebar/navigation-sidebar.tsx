@@ -26,11 +26,12 @@ import {
   Calendar,
 } from "lucide-react"
 import { Logo } from "./logo"
-import DashboardNavigation from "./icon-nav-main"
-import { NotificationsPopover } from "./icon-nav-notifications"
+import { NavigationMenu } from "./navigation-menu"
+import { NotificationsPopover } from "./notifications-popover"
 import { AuthTeamSwitcher } from "./auth-team-switcher"
+import Link from "next/link"
 
-const sampleNotifications = [
+const FAKE_NOTIFICATIONS = [
   {
     id: "1",
     avatar: "/avatars/01.png",
@@ -54,7 +55,7 @@ const sampleNotifications = [
   },
 ]
 
-const dashboardRoutes = [
+const ROUTES = [
   {
     id: "dashboard",
     title: "Dashboard",
@@ -149,13 +150,7 @@ const dashboardRoutes = [
     ],
   },
 ]
-
-const teams = [
-  { id: "1", name: "KilometerTracker", logo: Logo, plan: "Pro" },
-  { id: "2", name: "Personal", logo: Logo, plan: "Free" },
-]
-
-export function IconDashboardSidebar() {
+export function NavigationSidebar() {
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
 
@@ -167,10 +162,10 @@ export function IconDashboardSidebar() {
           isCollapsed ? "flex-col items-center justify-center gap-2" : "flex-row items-center justify-between",
         )}
       >
-        <a href="/dashboard/calendar" className={cn("flex items-center gap-2", isCollapsed && "justify-center")}>
+        <Link href="/dashboard/calendar" className={cn("flex items-center gap-2", isCollapsed && "justify-center")}>
           <Logo className="h-8 w-8" />
           {!isCollapsed && <span className="font-semibold text-black dark:text-white">KmTracker</span>}
-        </a>
+        </Link>
 
         <motion.div
           key={isCollapsed ? "header-collapsed" : "header-expanded"}
@@ -179,12 +174,12 @@ export function IconDashboardSidebar() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
         >
-          <NotificationsPopover notifications={sampleNotifications} />
+          <NotificationsPopover notifications={FAKE_NOTIFICATIONS} />
           <SidebarTrigger />
         </motion.div>
       </SidebarHeader>
       <SidebarContent className={cn("gap-4 py-4", isCollapsed ? "px-1" : "px-2")}>
-        <DashboardNavigation routes={dashboardRoutes} />
+        <NavigationMenu routes={ROUTES} />
       </SidebarContent>
       <SidebarFooter className={cn(isCollapsed ? "px-1" : "px-2")}>
         <AuthTeamSwitcher />

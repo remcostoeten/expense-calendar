@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,8 +24,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useCalendarStore } from "@/stores/calendar-store"
 import type { TCalendarEvent } from "./event-calendar"
+import { calendars } from "@/server/schema"
+import { Trash } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
-interface EventEditModalProps {
+type TProps = {
   isOpen: boolean
   onClose: () => void
   onSave: (event: TCalendarEvent) => void
@@ -33,7 +36,7 @@ interface EventEditModalProps {
   event: TCalendarEvent | null
 }
 
-export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: EventEditModalProps) {
+export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: TProps) {
   const { calendars } = useCalendarStore()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -61,7 +64,7 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
       setStartTime(format(event.start, "HH:mm"))
       setEndDate(format(event.end, "yyyy-MM-dd"))
       setEndTime(format(event.end, "HH:mm"))
-      // Find calendar by color to get the ID
+
       const calendar = calendars.find(cal => cal.color === event.color)
       setSelectedCalendarId(calendar?.id || "")
       setAllDay(event.allDay || false)
@@ -83,7 +86,7 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
     }
   }, [event])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!event) return
 
@@ -106,25 +109,27 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
       isRecurring,
       recurrenceRule: isRecurring
         ? {
-            frequency,
-            interval,
-            endDate: recurrenceEndType === "date" ? new Date(recurrenceEndDate) : undefined,
-            count: recurrenceEndType === "count" ? recurrenceCount : undefined,
-          }
+          frequency,
+          interval,
+          endDate: recurrenceEndType === "date" ? new Date(recurrenceEndDate) : undefined,
+          count: recurrenceEndType === "count" ? recurrenceCount : undefined,
+        }
         : undefined,
     })
 
     onClose()
   }
 
-  const handleDelete = () => {
+  function handleDelete() {
     if (event) {
       onDelete(event.id)
       onClose()
     }
   }
 
-  const availableCalendars = calendars.filter((cal) => cal.isVisible)
+  const availableCalendars = Array.isArray(calendars)
+    ? calendars.filter((cal) => typeof cal === "object" && "isVisible" in cal && cal.isVisible)
+    : []
 
   if (!event) return null
 
@@ -132,7 +137,10 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Event</DialogTitle>
+
+          <DialogTitle>
+            <span className="text-lg font-medium">Edit Event</span>
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -312,19 +320,18 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
                   <SelectItem key={calendar.id} value={calendar.id.toString()}>
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-3 h-3 rounded-full ${
-                          calendar.color === "emerald"
-                            ? "bg-emerald-500"
-                            : calendar.color === "orange"
-                              ? "bg-orange-500"
-                              : calendar.color === "violet"
-                                ? "bg-violet-500"
-                                : calendar.color === "blue"
-                                  ? "bg-blue-500"
-                                  : calendar.color === "rose"
-                                    ? "bg-rose-500"
-                                    : "bg-gray-500"
-                        }`}
+                        className={`w-3 h-3 rounded-full ${calendar.color === "emerald"
+                          ? "bg-emerald-500"
+                          : calendar.color === "orange"
+                            ? "bg-orange-500"
+                            : calendar.color === "violet"
+                              ? "bg-violet-500"
+                              : calendar.color === "blue"
+                                ? "bg-blue-500"
+                                : calendar.color === "rose"
+                                  ? "bg-rose-500"
+                                  : "bg-gray-500"
+                          }`}
                       />
                       {calendar.name}
                     </div>
@@ -363,6 +370,20 @@ export function EventEditModal({ isOpen, onClose, onSave, onDelete, event }: Eve
             </div>
           </div>
         </form>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={handleDelete}>
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="sr-only">Delete event</span>
+                <Trash className="w-4 h-4" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Delete event
+              </TooltipContent>
+            </Tooltip>
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

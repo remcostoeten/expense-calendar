@@ -6,48 +6,39 @@ import { useUser } from '@stackframe/stack'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { completeOnboardingAction } from "@/modules/onboarding/server/actions"
+import { toast } from "sonner"
 
-// Import step components
-import CommuteMethodStep from "./steps/commute-method-step"
-import AllowanceInfoStep from "./steps/allowance-info-step"
-import AddressesStep from "./steps/addresses-step"
-import OfficeDaysStep from "./steps/office-days-step"
-import HomeOfficeStep from "./steps/home-office-step"
-import SummaryStep from "./steps/summary-step"
+import { CommuteMethodStep } from "./steps/commute-method-step"
+import { AllowanceInfoStep } from "./steps/allowance-info-step"
+import { AddressesStep } from "./steps/addresses-step"
+import { OfficeDaysStep } from "./steps/office-days-step"
+import { HomeOfficeStep } from "./steps/home-office-step"
+import { SummaryStep } from "./steps/summary-step"
 
-export interface OnboardingData {
-  // Commute method
+export type TOnboarding = {
   commuteMethod: 'car' | 'public_transport' | 'walking' | 'bike'
   kmAllowance: number
   publicTransportCost?: number
-  
-  // Home office allowance
   homeOfficeAllowance: number
-  
-  // Addresses
   homeAddress: string
   homePostalCode: string
   homeCity: string
   homeStreet: string
-  
   officeAddress: string
   officePostalCode: string
   officeCity: string
   officeStreet: string
-  
-  // Distance
   distanceKm?: number
-  
-  // Office days
   hasFixedOfficeDays: boolean
   fixedOfficeDays: number[]
-  
-  // Home office days
   hasHomeOfficeAllowance: boolean
   homeOfficeDays: number[]
 }
 
-const STEPS = [
+type TStep = { id: string; title: string; component: (props: any) => JSX.Element }
+
+const STEPS: TStep[] = [
   { id: 'commute-method', title: 'Commute Method', component: CommuteMethodStep },
   { id: 'allowance-info', title: 'Allowance Info', component: AllowanceInfoStep },
   { id: 'addresses', title: 'Addresses', component: AddressesStep },
@@ -60,7 +51,8 @@ export default function OnboardingFlow() {
   const user = useUser()
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
-  const [data, setData] = useState<OnboardingData>({
+  const [isLoading, setIsLoading] = useState(false)
+  const [data, setData] = useState<TOnboarding>({
     commuteMethod: 'car',
     kmAllowance: 0.23,
     homeOfficeAllowance: 2.00,
@@ -78,28 +70,45 @@ export default function OnboardingFlow() {
     homeOfficeDays: [],
   })
 
-  const updateData = (updates: Partial<OnboardingData>) => {
-    setData(prev => ({ ...prev, ...updates }))
+  function updateData(updates: Partial<TOnboarding>) {
+  setData(prev => ({ ...prev, ...updates }))
   }
 
-  const nextStep = () => {
+  function nextStep() {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1)
     }
   }
 
-  const prevStep = () => {
+  function prevStep() {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
     }
   }
 
-  const completeOnboarding = async () => {
-    // TODO: Save data to database
-    console.log('Completing onboarding with data:', data)
-    
-    // For now, just redirect to dashboard
-    router.push('/dashboard/calendar')
+  async function completeOnboarding() {
+    if (!user?.id) {
+      toast.error("User not authenticated. Please sign in again.")
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const result = await completeOnboardingAction(user.id, data)
+
+      if (result.success) {
+        toast.success("Onboarding completed successfully!")
+        router.push('/dashboard/calendar')
+      } else {
+        toast.error(result.error || "Failed to complete onboarding. Please try again.")
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error)
+      toast.error("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!user) {
@@ -115,7 +124,6 @@ export default function OnboardingFlow() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-8">
       <div className="container mx-auto px-4 max-w-2xl">
-        {/* Progress */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground">
@@ -129,7 +137,6 @@ export default function OnboardingFlow() {
           <h1 className="text-xl font-semibold mt-2">{currentStepData.title}</h1>
         </div>
 
-        {/* Step Content */}
         <Card>
           <CardContent className="p-6">
             <StepComponent
@@ -144,7 +151,6 @@ export default function OnboardingFlow() {
           </CardContent>
         </Card>
 
-        {/* Navigation */}
         <div className="flex justify-between mt-6">
           <Button
             variant="outline"
@@ -153,14 +159,14 @@ export default function OnboardingFlow() {
           >
             Previous
           </Button>
-          
+
           {currentStep < STEPS.length - 1 ? (
             <Button onClick={nextStep}>
               Next
             </Button>
           ) : (
-            <Button onClick={completeOnboarding}>
-              Complete Setup
+            <Button onClick={completeOnboarding} disabled={isLoading}>
+              {isLoading ? "Completing..." : "Complete Setup"}
             </Button>
           )}
         </div>
