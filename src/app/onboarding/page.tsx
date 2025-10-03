@@ -1,10 +1,10 @@
-import { OnboardingGuard } from "@/components/auth/onboarding-guard"
+import { AppGuard } from "@/components/auth/app-guard"
 import OnboardingFlow from "./onboarding-flow"
 
 export default function OnboardingPage() {
   return (
-    <OnboardingGuard requireOnboarding={false}>
+    <AppGuard requireAuth={true} requireOnboarding={false}>
       <OnboardingFlow />
-    </OnboardingGuard>
+    </AppGuard>
   )
 }

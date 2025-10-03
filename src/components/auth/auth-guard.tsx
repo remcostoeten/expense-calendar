@@ -5,7 +5,7 @@ import { useUser } from '@stackframe/stack'
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
-interface AuthGuardProps {
+interface OnboardingGuardProps {
   children: React.ReactNode
   fallback?: React.ReactNode
   redirectTo?: string
@@ -13,7 +13,7 @@ interface AuthGuardProps {
 }
 
 // Component-based auth guard (alternative to HoC)
-export function AuthGuard({ children, fallback, redirectTo = "/auth/signin", requireAuth = true }: AuthGuardProps) {
+export function OnboardingGuard({ children, fallback, redirectTo = "/auth/signin", requireAuth = true }: OnboardingGuardProps) {
   const user = useUser()
   const router = useRouter()
 

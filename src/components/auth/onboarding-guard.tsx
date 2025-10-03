@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react"
 
 type TProps = {
   children: React.ReactNode
+  requireAuth?: boolean
   requireOnboarding?: boolean
 }
 
@@ -20,17 +21,21 @@ export function clearOnboardingCache(userId: string) {
   onboardingCache.delete(userId)
 }
 
-export function OnboardingGuard({ children, requireOnboarding = true }: TProps) {
+export function OnboardingGuard({ requireAuth = true, children, requireOnboarding = true }: TProps) {
   const router = useRouter()
   const user = useUser()
   const [isChecking, setIsChecking] = useState(true)
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [showContent, setShowContent] = useState(false)
 
+  if (!requireAuth && !user) {
+    return <>{children}</>
+  }
+
   useEffect(() => {
     const checkAccess = async () => {
       if (!user) {
-        router.push("/auth/signin")
+        router.push("/handler/sign-in")
         return
       }
 

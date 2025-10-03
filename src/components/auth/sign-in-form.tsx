@@ -2,23 +2,28 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import { useUser } from '@stackframe/stack'
+import { useUser, useSignIn } from '@stackframe/stack'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function SignInForm() {
   const user = useUser()
+  const signIn = useSignIn()
   const router = useRouter()
 
   // Redirect if already authenticated
   React.useEffect(() => {
     if (user) {
-      router.push("/dashboard/calendar")
+      router.push("/")
     }
   }, [user, router])
 
-  const handleRedirectToSignIn = () => {
-    router.push("/auth/signin")
+  const handleSignIn = async () => {
+    try {
+      await signIn.redirectToSignIn()
+    } catch (error) {
+      console.error('Sign in error:', error)
+    }
   }
 
   if (user) {
@@ -36,7 +41,7 @@ export default function SignInForm() {
           <p className="text-sm text-muted-foreground">
             Click the button below to sign in using Stack Auth with OAuth2 and email authentication.
           </p>
-          <Button onClick={handleRedirectToSignIn} className="w-full">
+          <Button onClick={handleSignIn} className="w-full">
             Sign In with Stack Auth
           </Button>
         </div>

@@ -1,5 +1,4 @@
 import { StackHandler } from '@stackframe/stack'
-
 import { stackServerApp } from '@/app/stack'
 
 export default function Handler(props: any) {

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/hooks/use-toast"
 import { completeOnboardingAction } from "@/modules/onboarding/server/actions"
-import { clearOnboardingCache } from "@/components/auth/onboarding-guard"
+import { clearOnboardingCache } from "@/components/auth/app-guard"
 import { CommuteMethodStep } from "./steps/commute-method-step"
 import { AllowanceInfoStep } from "./steps/allowance-info-step"
 import { AddressesStep } from "./steps/addresses-step"
@@ -131,7 +131,7 @@ export default function OnboardingFlow() {
   }
 
   if (!user) {
-    router.push('/auth/signin')
+    router.push('/handler/[...stack]')
     return null
   }
 

@@ -1,5 +1,9 @@
-import SignInPage from "./signin-page"
+import SignInForm from "@/components/auth/sign-in-form"
 
-export default function SignIn() {
-  return <SignInPage />
+export default function SignInPage() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <SignInForm />
+    </div>
+  )
 }

@@ -1,12 +1,12 @@
-import { OnboardingGuard } from "@/components/auth/onboarding-guard"
+import { AppGuard } from "@/components/auth/app-guard"
 import ClientCalendar from "./client-calendar"
 
 export const dynamic = "force-dynamic"
 
 export default function CalendarPage() {
   return (
-    <OnboardingGuard requireOnboarding={true}>
+    <AppGuard requireAuth={true} requireOnboarding={true}>
       <ClientCalendar />
-    </OnboardingGuard>
+    </AppGuard>
   )
 }
