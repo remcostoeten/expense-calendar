@@ -10,12 +10,12 @@ import { Progress } from "@/components/ui/progress"
 // Import step components
 import CommuteMethodStep from "./steps/commute-method-step"
 import AllowanceInfoStep from "./steps/allowance-info-step"
-import AddressesStep from "./steps/addresses-step"
+import { AddressesStep } from "./steps/addresses-step"
 import OfficeDaysStep from "./steps/office-days-step"
 import HomeOfficeStep from "./steps/home-office-step"
 import SummaryStep from "./steps/summary-step"
 
-export interface OnboardingData {
+export type TOnboarding = {
   // Commute method
   commuteMethod: 'car' | 'public_transport' | 'walking' | 'bike'
   kmAllowance: number
@@ -60,7 +60,7 @@ export default function OnboardingFlow() {
   const user = useUser()
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
-  const [data, setData] = useState<OnboardingData>({
+  const [data, setData] = useState<TOnboarding>({
     commuteMethod: 'car',
     kmAllowance: 0.23,
     homeOfficeAllowance: 2.00,
@@ -78,7 +78,7 @@ export default function OnboardingFlow() {
     homeOfficeDays: [],
   })
 
-  const updateData = (updates: Partial<OnboardingData>) => {
+  const updateData = (updates: Partial<TOnboarding>) => {
     setData(prev => ({ ...prev, ...updates }))
   }
 
